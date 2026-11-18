@@ -13,7 +13,7 @@ public class CatalogService {
     public record Quote(int basePrice, int optionsPrice, int total, String currency, boolean demonstration) {}
     private final Catalog catalog = new Catalog(
         List.of(new Car("m4", "M4 Competition", "La expresión del carácter.", 124500, "530", "3,5", "M xDrive"),
-            new Car("e46", "330i E46", "El carácter de un clásico.", 35000, "231", "6,5", "Propulsión")),
+            new Car("e46", "330i E46", "El carácter de un clásico.", 35000, "231", "6,5", "Trasera")),
         List.of(new Option("blue", "Portimao Blue", 0, "#2868b2"), new Option("grey", "Brooklyn Grey", 1100, "#a2a8a6"),
             new Option("black", "Sapphire Black", 1100, "#202326"), new Option("green", "Isle of Man Green", 1900, "#276b5c"), new Option("white", "Alpine White", 0, "#e8e8de")),
         List.of(new Option("sport", "M · Acabado Plata", 0, null), new Option("forged", "M · Acabado Jet Black", 2400, null)),
