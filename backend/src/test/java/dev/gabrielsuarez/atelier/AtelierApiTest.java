@@ -16,13 +16,15 @@ class AtelierApiTest {
     @Autowired MockMvc mvc;
     @Autowired ObjectMapper json;
     private final String selection = "{\"model\":\"m4\",\"paint\":\"green\",\"wheels\":\"forged\",\"interior\":\"cognac\",\"total\":1}";
-    @Test void offersM4AndE46AndRejectsRetiredModels() throws Exception {
+    @Test void offersThreeModelsAndRejectsRetiredModels() throws Exception {
         mvc.perform(get("/api/catalog")).andExpect(status().isOk())
-            .andExpect(jsonPath("$.models.length()").value(2))
+            .andExpect(jsonPath("$.models.length()").value(3))
             .andExpect(jsonPath("$.models[0].id").value("m4"))
             .andExpect(jsonPath("$.models[1].id").value("e46"))
-            .andExpect(jsonPath("$.models[1].name").value("330i E46"));
-        for (String retired : new String[]{"m2", "i4"}) {
+            .andExpect(jsonPath("$.models[1].name").value("330i E46"))
+            .andExpect(jsonPath("$.models[2].id").value("m2"))
+            .andExpect(jsonPath("$.models[2].power").value("460"));
+        for (String retired : new String[]{"i4"}) {
             mvc.perform(post("/api/quotes").contentType(MediaType.APPLICATION_JSON).content(selection.replace("m4", retired)))
                 .andExpect(status().isBadRequest());
         }
@@ -36,6 +38,17 @@ class AtelierApiTest {
         mvc.perform(get("/api/configurations/" + json.readTree(saved).get("id").asText()))
             .andExpect(status().isOk()).andExpect(jsonPath("$.model").value("e46"))
             .andExpect(jsonPath("$.total").value(41100));
+    }
+    @Test void savesAndQuotesM2UsingItsOwnBasePrice() throws Exception {
+        String m2 = selection.replace("m4", "m2");
+        mvc.perform(post("/api/quotes").contentType(MediaType.APPLICATION_JSON).content(m2))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.basePrice").value(96900))
+            .andExpect(jsonPath("$.total").value(103000));
+        String saved = mvc.perform(post("/api/configurations").contentType(MediaType.APPLICATION_JSON).content(m2))
+            .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();
+        mvc.perform(get("/api/configurations/" + json.readTree(saved).get("id").asText()))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.model").value("m2"))
+            .andExpect(jsonPath("$.total").value(103000));
     }
     @Test void computesPriceOnServerIgnoringClientTotal() throws Exception {
         mvc.perform(post("/api/quotes").contentType(MediaType.APPLICATION_JSON).content(selection))

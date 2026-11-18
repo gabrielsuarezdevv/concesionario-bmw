@@ -43,3 +43,21 @@ is illustrative, not a mechanically accurate disassembly.
 
 Preview JPEGs in previews/ are captures of these credited models rendered by this project's viewer.
 BMW names and marks belong to BMW AG; this project is independent and unaffiliated.
+
+## BMW M2 G87
+
+"BMW M2 g87 [Free]" by Black Snow (https://sketchfab.com/BlackSnow02).
+Original: https://sketchfab.com/3d-models/bmw-m2-g87-free-125412579b244790b27b2a7839527c6e
+License: CC BY 4.0 — https://creativecommons.org/licenses/by/4.0/
+Redistributed GLB: https://github.com/lvz7/Portfolio/blob/4a227db2b31bb3ed14750d2c80e06d546508d526/public/models/bmw-m2-g87.glb
+Bundled file: bmw-m2-g87.glb (19,027,892 bytes).
+SHA256: 440b8c5d33d08eb7fb4f22a677ca16cf046d26eb78c54f9daee1268f83711039
+Embedded author, license and original source metadata are preserved unchanged.
+
+Runtime modifications: normalize the complete body and cabin with one common transform;
+retain the rear-drive transmission variant; configurable clear-coated paint, wheel finish
+and source seat-leather tint; physical window glass. Original dashboard, display, upholstery,
+normal and roughness textures are retained. Animated assembly separation is illustrative.
+The artistic asset includes custom mechanical components, not factory-accurate M2 internals.
+The reference specification is the 2023 G87 automatic (460 hp, 4.1 s, rear-wheel drive).
+The 96,900 EUR base price is a fictional demonstration value, not a commercial offer.

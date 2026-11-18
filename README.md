@@ -25,13 +25,13 @@ Abre http://127.0.0.1:4200. Angular reenvía `/api` al servidor en el puerto 808
 
 ## Experiencia disponible
 
-- BMW M4 Competition y BMW 330i E46 con archivos GLB independientes, rotación 360° con ratón, gestos o flechas; zoom con rueda o +/−. El E46 se descarga cuando se selecciona por primera vez (unos 35 MB para el coche completo).
+- BMW M4 Competition, BMW 330i E46 y BMW M2 G87 con archivos GLB independientes, rotación 360° con ratón, gestos o flechas; zoom con rueda o +/−. El E46 se descarga cuando se selecciona por primera vez (unos 35 MB para el coche completo).
 - Iluminación de estudio generada localmente, pintura con barniz y microtextura, cristales con transmisión física y sombras de contacto proyectadas desde la geometría. Se conservan las texturas originales de carbono, neumáticos y detalles de las ruedas. El realismo sigue limitado por la malla y las texturas del modelo de origen.
 - Cámara interior desde el puesto del conductor.
 - Habitáculo con vinilo no metálico, mapas de detalle de cuero CC0 de Poly Haven y oclusión ambiental de corto alcance, calculada solo en la vista interior. Los cristales no participan como superficies opacas en ese cálculo. El color de tapicería usa una máscara espacial aproximada porque el GLB comparte materiales entre asientos y molduras.
 - Despiece animado por grupos visuales: carrocería, acristalamiento, habitáculo y cuatro ruedas. Se activa manualmente desde sus controles; cambiar pintura, llantas o tapicería conserva la vista elegida.
 - Cinco pinturas, dos acabados de llantas y tres colores de tapicería. Los cambios son de materiales; no sustituyen geometría por piezas OEM.
-- Catálogo de dos modelos: M4 Competition y 330i E46. M2 e i4 retirados del selector y de los presupuestos del servidor. Las configuraciones antiguas con modelos retirados vuelven al M4 al abrir la web. Las fichas, precios y opciones son de demostración; los acabados no representan un catálogo de fábrica del E46.
+- Catálogo de tres modelos: M4 Competition, 330i E46 y M2 G87. i4 retirado del selector y de los presupuestos del servidor. Las configuraciones antiguas con modelos retirados vuelven al M4 al abrir la web. Las fichas, precios y opciones son de demostración; los acabados no representan un catálogo de fábrica del E46.
 - Resumen, guardado en Spring Boot/H2, restauración local, enlaces de configuración y descarga JSON.
 - Si el servidor no está disponible, la interfaz lo indica y permite guardar exclusivamente en el navegador. El presupuesto del servidor nunca acepta un total enviado por el cliente.
 - Navegación por teclado, diálogos nativos, avisos accesibles y respeto por movimiento reducido.
@@ -101,3 +101,9 @@ La animación separa grupos de geometría/materiales y no representa un desmonta
 Proyecto independiente, sin afiliación con BMW AG. Marcas y nombres pertenecen a sus titulares.
 
 Se ha retirado la combinación anterior de carrocería GTR e interior ajeno, junto con el extractor de habitáculo. El E46 se carga desde un único GLB con créditos y licencia incorporados. Sus texturas originales tienen limitaciones: el detalle del modelo mejora el habitáculo, pero no equivale a una reconstrucción fotorrealista.
+
+## BMW M2 G87
+
+Modelo completo gratuito de **Black Snow**, bajo [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/): [obra original](https://sketchfab.com/3d-models/bmw-m2-g87-free-125412579b244790b27b2a7839527c6e). Exterior e interior proceden del mismo GLB (19 MB), cargado al seleccionar el M2. Conserva las texturas originales del habitáculo, pantallas, cuero y detalles; pintura, acabado de llantas y tapicería se ajustan en ejecución. El despiece agrupa las piezas por ensamblajes del autor.
+
+La ficha ilustra el G87 de 2023: 460 CV, propulsión trasera y 4,1 s con cambio automático, según [BMW PressClub](https://www.press.bmwgroup.com/global/article/detail/T0404444EN/the-all-new-bmw-m2). El precio base de 96.900 € es ficticio. El recurso artístico incluye modificaciones mecánicas y no reproduce una especificación OEM exacta.

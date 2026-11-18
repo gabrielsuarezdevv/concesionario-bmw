@@ -18,9 +18,9 @@
 .interior-view .model-watermark{visibility:hidden}.interior-view .scene-label{padding:8px;background:var(--overlay);border-radius:3px}.interior-view .scene-label small{top:25px;background:var(--overlay);padding:3px 6px;left:8px}.interior-view .concept-badge{background:var(--overlay)}.interior-view .orbit-hint{background:var(--overlay);padding:4px 8px;border-radius:3px}
 
 .summary-message{font-size:11px;color:var(--accent);line-height:1.6;margin:12px 0 0}.summary-message:empty{display:none}
-.model-grid.two-models{grid-template-columns:repeat(2,minmax(0,1fr))}@media(max-width:520px){.model-grid.two-models{grid-template-columns:1fr}}
 
-.model-grid.two-models .card-art{height:clamp(180px,20vw,230px)}.card-art img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+
+.card-art img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
 
 @keyframes experience-sheen{0%,20%{background-position:100% 50%}70%,100%{background-position:0% 50%}}
 @media(prefers-reduced-motion:reduce){.experience-number{background-position:50% 50%}}
@@ -30,3 +30,10 @@
 @media(max-width:1150px){.showroom{grid-template-columns:minmax(0,1fr) 360px}.scene-container{max-height:415px}.specs strong{font-size:32px}.specs p{display:none}}
 @media(max-width:800px){.showroom{display:block}.scene-container{flex:none;min-height:0;max-height:none}.specs strong{font-size:30px}.specs p{display:none}.specs{grid-template-columns:repeat(3,minmax(0,1fr))}footer p{flex-basis:100%}}
 @media(max-width:520px){.specs{grid-template-columns:repeat(2,minmax(0,1fr)) minmax(0,1.3fr);gap:10px}.specs>div{padding-right:10px}.specs strong{font-size:clamp(22px,6.5vw,28px);letter-spacing:-.6px}.specs strong small{font-size:14px;margin-left:4px}.specs>div>span{font-size:13px}.config-panel{min-width:0}.panel-price strong{font-size:38px}.swatches{gap:clamp(10px,4vw,20px)}.model-card h3{min-height:0}.model-card p{min-height:0}footer{display:grid;grid-template-columns:minmax(0,1fr);justify-items:center;text-align:center}footer p{width:100%;order:3}}
+
+/* Three independent cars, with enough room for readable prices. */
+.model-grid.three-models{grid-template-columns:repeat(3,minmax(0,1fr))}
+.model-grid.three-models .card-art{height:clamp(160px,17vw,230px)}
+.model-grid.three-models .card-bottom{flex-wrap:wrap;gap:8px 16px}
+@media(max-width:1150px){.model-grid.three-models{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:650px){.model-grid.three-models{grid-template-columns:1fr}.model-grid.three-models .card-art{height:230px}}
