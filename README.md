@@ -26,6 +26,7 @@ Abre http://127.0.0.1:4200. Angular reenvía `/api` al servidor en el puerto 808
 ## Experiencia disponible
 
 - BMW M4 detallado en GLB, rotación 360° con ratón, gestos o flechas; zoom con rueda o +/−.
+- Iluminación de estudio generada localmente, pintura con barniz y microtextura, cristales con transmisión física y sombras de contacto proyectadas desde la geometría. Se conservan las texturas originales de carbono, neumáticos y detalles de las ruedas. El realismo sigue limitado por la malla y las texturas del modelo de origen.
 - Cámara interior desde el puesto del conductor.
 - Despiece animado por grupos visuales: carrocería, acristalamiento, habitáculo y cuatro ruedas. Se activa manualmente desde sus controles; cambiar pintura, llantas o tapicería conserva la vista elegida.
 - Cinco pinturas, dos acabados de llantas y tres colores de tapicería. Los cambios son de materiales; no sustituyen geometría por piezas OEM.

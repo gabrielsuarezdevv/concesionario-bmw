@@ -11,7 +11,9 @@ Redistributed GLB obtained from https://github.com/coopercodes/bmwGLB
 The original attribution is preserved inside the GLB asset metadata.
 
 Runtime modifications: normalized scale/orientation, configurable paint and seat/rim material colors,
-replaced decorative livery material, glass transparency and animated separation of material groups.
+replaced decorative livery material, physical glass transmission and animated separation of material groups.
+The original carbon-fiber, tyre, wheel and badge textures are retained; runtime materials are adjusted
+for clear-coated paint, metal and rubber. Studio reflections and contact shadows are generated locally.
 This is a visual demonstration, not a mechanically accurate engineering disassembly.
 
 The M2 and i4 use original procedural concept geometry, not replicas of those vehicles.

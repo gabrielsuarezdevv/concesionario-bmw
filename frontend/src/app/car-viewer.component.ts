@@ -1,9 +1,10 @@
 import { AfterViewInit, Component, ElementRef, Input, OnChanges, OnDestroy, SimpleChanges, ViewChild, signal } from '@angular/core';
 import * as T from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { FlakesTexture } from 'three/addons/textures/FlakesTexture.js';
+import { ContactShadow, createStudioEnvironment } from './studio-rendering';
 
 type Part = { group: T.Group; origin: T.Vector3; offset: T.Vector3; kind: string };
 @Component({
@@ -39,7 +40,7 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
   private frame = 0;
   private observer?: ResizeObserver;
   private movingCamera = true;
-  private targetPosition = new T.Vector3(5.7, 2.5, 6.1);
+  private targetPosition = new T.Vector3(5.2, 2.1, 5.4);
   private targetLook = new T.Vector3(0, .65, 0);
   private environment?: T.WebGLRenderTarget;
   private reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -50,6 +51,11 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
   private detailedSeats: T.MeshStandardMaterial[] = [];
   private detailedRims: T.MeshStandardMaterial[] = [];
   private disposed=false;
+  private contactShadow?: ContactShadow;
+  private shadowDirty=true;
+  private lastShadowUpdate=0;
+  private paintNormal?: T.CanvasTexture;
+  private narrowViewport=false;
 
   ngAfterViewInit() {
     try {
@@ -57,22 +63,29 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
       this.renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
       this.renderer.shadowMap.enabled = true;
       this.renderer.shadowMap.type = T.PCFSoftShadowMap;
+      this.renderer.shadowMap.autoUpdate = false;
       this.renderer.toneMapping = T.ACESFilmicToneMapping;
-      this.renderer.toneMappingExposure = .95;
+      this.renderer.toneMappingExposure = 1.05;
+      this.renderer.outputColorSpace = T.SRGBColorSpace;
       this.stage.nativeElement.appendChild(this.renderer.domElement);
-      const generator = new T.PMREMGenerator(this.renderer);
-      const room = new RoomEnvironment();
-      this.environment = generator.fromScene(room, .04);
+      this.environment = createStudioEnvironment(this.renderer);
       this.scene.environment = this.environment.texture;
-      generator.dispose(); room.dispose();
-      this.scene.add(new T.HemisphereLight('#dbe7f2', '#242b38', 2.5));
-      const key = new T.DirectionalLight('#ebf3ff', 4.2); key.position.set(3, 7, 5); key.castShadow = true;
-      key.shadow.mapSize.set(2048, 2048); Object.assign(key.shadow.camera, {left:-5,right:5,top:5,bottom:-5}); key.shadow.bias=-.001; this.scene.add(key);
-      const rim = new T.DirectionalLight('#dceaff', 3); rim.position.set(-4, 4, -3); this.scene.add(rim);
-      const floor = new T.Mesh(new T.CircleGeometry(5.5, 96), new T.ShadowMaterial({ color:'#000000',opacity:.55 }));
+      this.scene.environmentIntensity = 1.15;
+      this.scene.add(new T.HemisphereLight('#e1e9f4', '#141820', .55));
+      const key = new T.DirectionalLight('#ffffff', 1.7); key.position.set(2, 5, 4); key.castShadow = true;
+      key.shadow.mapSize.set(2048, 2048); Object.assign(key.shadow.camera, {left:-4,right:4,top:4,bottom:-4,near:.1,far:15});
+      key.shadow.bias=-.0002; key.shadow.normalBias=.008; key.shadow.camera.updateProjectionMatrix(); this.scene.add(key);
+      const rim = new T.DirectionalLight('#dceaff', .8); rim.position.set(-4, 3, -3); this.scene.add(rim);
+      const floor = new T.Mesh(new T.CircleGeometry(5.5, 96), new T.ShadowMaterial({ color:'#000000',opacity:.20 }));
       floor.rotation.x = -Math.PI/2; floor.position.y = .015; floor.receiveShadow=true; this.scene.add(floor);
-      const ring = new T.Mesh(new T.RingGeometry(3.3,3.31,128),new T.MeshBasicMaterial({color:'#3975ab',transparent:true,opacity:.2,side:T.DoubleSide})); ring.rotation.x=-Math.PI/2; ring.position.y=.025; this.scene.add(ring);
+      this.contactShadow = new ContactShadow(); this.scene.add(this.contactShadow.mesh);
+      const ring = new T.Mesh(new T.RingGeometry(3.3,3.307,128),new T.MeshBasicMaterial({color:'#3975ab',transparent:true,opacity:.1,side:T.DoubleSide})); ring.rotation.x=-Math.PI/2; ring.position.y=.025; this.scene.add(ring);
+      this.paintNormal = new T.CanvasTexture(new FlakesTexture(128, 128));
+      this.paintNormal.wrapS=this.paintNormal.wrapT=T.RepeatWrapping; this.paintNormal.repeat.set(100,100);
+      this.paintNormal.anisotropy=Math.min(8,this.renderer.capabilities.getMaxAnisotropy());
+      this.body.normalMap=this.paintNormal; this.body.normalScale.set(.018,.018); this.body.clearcoatRoughness=.13;
       this.buildCar(); this.scene.add(this.car); this.scene.add(this.detailed); this.loadDetailedCar();
+      this.car.traverse(object=>{if(object instanceof T.Mesh)object.layers.enable(1);});
       this.camera.position.copy(this.targetPosition);
       this.controls = new OrbitControls(this.camera, this.renderer.domElement);
       this.controls.target.copy(this.targetLook); this.controls.enableDamping=true; this.controls.enablePan=false;
@@ -82,22 +95,32 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
       this.applyInputs(); this.animate(0);
     } catch (e) { console.error('WebGL initialization failed', e); this.error.set(true); }
   }
-  ngOnChanges(changes: SimpleChanges) { if(this.renderer) { this.applyInputs(); if(changes['view'] || changes['resetKey'] || changes['exploded']) this.moveCamera(); } }
+  ngOnChanges(changes: SimpleChanges) {
+    if(this.renderer) {
+      this.applyInputs();
+      if(changes['model'] || changes['exploded'] || changes['view'])this.shadowDirty=true;
+      if(changes['view'] || changes['resetKey'] || changes['exploded'])this.moveCamera();
+    }
+  }
   private applyInputs() {
     this.body.color.set(this.paint); this.leather.color.set(this.interior);
     this.alloy.color.set(this.wheels==='forged'?'#353b3e':'#b6bdc2');
     this.car.scale.set(this.model==='m2'?.94:1, 1, this.model==='i4'?1.02:1);
     this.detailed.visible=this.model==='m4' && this.detailedParts.length>0;
     this.car.visible=!this.detailed.visible;
-    this.detailedPaints.forEach(m=>m.color.set(this.paint));
+    for(const material of [this.body,...this.detailedPaints]) {
+      material.color.set(this.paint);
+      material.metalness=this.paint==='#e8e8de'?.08:this.paint==='#a2a8a6'?.24:.65;
+      material.roughness=this.paint==='#e8e8de'?.32:.28;
+    }
     this.detailedSeats.forEach(m=>m.color.set(this.interior));
-    this.detailedRims.forEach(m=>m.color.set(this.wheels==='forged'?'#242a2f':'#c3c9cc'));
+    this.detailedRims.forEach(m=>{m.color.set(this.wheels==='forged'?'#505965':'#e2e6eb');m.metalness=this.wheels==='forged'?.85:.65;m.roughness=.32;});
     this.parts.filter(p=>p.kind==='roof').forEach(p=>p.group.visible=this.view!=='interior');
     if(this.controls) { this.controls.autoRotate=this.autoRotate && this.view==='exterior' && !this.reducedMotion; this.controls.autoRotateSpeed=.65; }
   }
   private moveCamera() {
     const inside=this.view==='interior';
-    this.targetPosition.set(...(inside?[-.30,1.12,-.38]:this.exploded?[7.8,4.2,8.0]:[5.7,2.5,6.1]) as [number,number,number]);
+    this.targetPosition.set(...(inside?[-.30,1.12,-.38]:this.exploded?[7.8,4.2,8.0]:this.narrowViewport?[5.8,2.3,6.0]:[5.2,2.1,5.4]) as [number,number,number]);
     this.targetLook.set(...(inside?[.68,.85,-.10]:[0,this.exploded?1:.65,0]) as [number,number,number]);
     this.camera.fov=inside?68:30;this.camera.updateProjectionMatrix();
     if(this.controls) { this.controls.minDistance=inside?.05:4; this.controls.maxDistance=inside?2.5:12; this.controls.maxPolarAngle=inside?Math.PI:Math.PI/2-.02; this.controls.enableRotate=!inside; }
@@ -196,7 +219,15 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
     }
     const hub=new T.Mesh(new T.CylinderGeometry(.07,.07,.18,24),this.alloy); hub.rotation.x=Math.PI/2; hub.position.set(x,.48,z); group.add(hub);
   }
-  private resize() { const {clientWidth:w,clientHeight:h}=this.stage.nativeElement; if(!w||!h)return; this.camera.aspect=w/h; this.camera.updateProjectionMatrix(); this.renderer?.setSize(w,h); }
+  private resize() {
+    const {clientWidth:w,clientHeight:h}=this.stage.nativeElement; if(!w||!h)return;
+    this.camera.aspect=w/h; this.camera.updateProjectionMatrix();
+    if(this.renderer){this.renderer.transmissionResolutionScale=w<600?.5:1;this.renderer.setSize(w,h);}
+    if(this.narrowViewport!==(w<520)) {
+      this.narrowViewport=w<520;
+      if(this.view==='exterior'&&!this.exploded)this.moveCamera();
+    }
+  }
   private loadDetailedCar() {
     new GLTFLoader().load('/models/bmw-m4.glb', gltf=>{
       if(this.disposed)return;
@@ -207,23 +238,62 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
       const normalize=new T.Matrix4().makeScale(factor,factor,factor).multiply(new T.Matrix4().makeTranslation(-center.x,-bounds.min.y,-center.z));
       const meshes:T.Mesh[]=[];source.traverse(o=>{if(o instanceof T.Mesh)meshes.push(o);});
       for(const mesh of meshes) {
-        const original=Array.isArray(mesh.material)?mesh.material[0]:mesh.material;
+        const original=(Array.isArray(mesh.material)?mesh.material[0]:mesh.material) as T.MeshStandardMaterial;
         const name=original.name.toLowerCase();
         const geometry=mesh.geometry.clone().applyMatrix4(new T.Matrix4().multiplyMatrices(normalize,mesh.matrixWorld));
         let material=original.clone() as T.MeshStandardMaterial;
         let kind='structure';let offset=new T.Vector3();
-        if(name.includes('body15')||name.includes('zx1')||name.includes('livery')) {
-          material=new T.MeshPhysicalMaterial({color:this.paint,metalness:.78,roughness:.24,clearcoat:1,clearcoatRoughness:.13});
+        if(name.includes('zx1')||name.includes('livery')) {
+          material=new T.MeshPhysicalMaterial({
+            color:this.paint,metalness:.65,roughness:.28,clearcoat:1,clearcoatRoughness:.13,
+            normalMap:this.paintNormal,normalScale:new T.Vector2(.018,.018),envMapIntensity:1
+          });
           this.detailedPaints.push(material);kind='paint';offset.set(0,1.25,0);
+        } else if(name.includes('body15')) {
+          material=new T.MeshPhysicalMaterial({
+            map:original.map,color:'#b3b3b3',metalness:.25,roughness:.38,
+            clearcoat:.7,clearcoatRoughness:.25,bumpMap:original.map,bumpScale:.0015,envMapIntensity:.7
+          });
+          kind='structure';offset.set(0,1.25,0);
         } else if(name.includes('interior18')||name.includes('interior23')) {
           material.map=null;material.color.set(this.interior);material.roughness=.8;material.metalness=0;
           this.detailedSeats.push(material);kind='interior';offset.set(-.1,.7,0);
         } else if(name.includes('m8rim') && !name.includes('001')) {
-          material.map=null;material.metalness=.95;material.roughness=.23;this.detailedRims.push(material);kind='wheels';
-        } else if(name.includes('windows')) {material.color.set('#597780');material.opacity=.3;material.transparent=true;material.depthWrite=false;kind='glass';offset.set(0,1.5,0);}
+          material.metalness=.95;material.roughness=.24;this.detailedRims.push(material);kind='wheels';
+          material.onBeforeCompile=shader=>{
+            shader.fragmentShader=shader.fragmentShader.replace('#include <map_fragment>', `
+              #ifdef USE_MAP
+                vec4 wheelTexel = texture2D(map, vMapUv);
+                // Refinish only the original wheel-paint swatches; retain brake and badge artwork.
+                if(vMapUv.x > 0.875 && vMapUv.y > 0.125 && vMapUv.y < 0.25) {
+                  wheelTexel.rgb = mix(wheelTexel.rgb, vec3(0.8), 0.85);
+                }
+                diffuseColor *= wheelTexel;
+              #endif
+            `);
+          };
+        } else if(name.includes('m8rim001')) {
+          material.color.set('#bfc1c5');material.metalness=0;material.roughness=.94;
+          material.bumpMap=material.map;material.bumpScale=.003;
+        } else if(name.includes('windows')) {
+          const glass=new T.MeshPhysicalMaterial({
+            color:'#ffffff',metalness:0,roughness:.025,transmission:1,thickness:.008,
+            ior:1.52,attenuationColor:'#8395a7',attenuationDistance:.3,side:T.DoubleSide,
+            envMapIntensity:.6
+          });
+          material=glass;kind='glass';offset.set(0,1.5,0);
+        }
         else if(name.includes('redlight')) {material.emissive.set('#d10816');material.emissiveIntensity=.7;}
-        else if(name.includes('pillars')) {material.roughness=.55;kind='structure';offset.set(0,.25,0);}
+        else if(name.includes('pillars')) {material.metalness=.15;material.roughness=.38;kind='structure';offset.set(0,.25,0);}
+        else if(name.includes('headlight5')) {material.color.set('#aebdcd');material.opacity=.28;material.transparent=true;material.depthWrite=false;material.roughness=.08;material.envMapIntensity=1.3;}
+        else if(name.includes('chrome5')||name.includes('white4')) {material.color.set('#adb6c2');material.metalness=.85;material.roughness=.26;}
+        else if(name.includes('caliper')) {material.color.set('#0066b1');material.metalness=.5;material.roughness=.36;}
+        else if(name.includes('black16')||name.includes('piggrill')||name.includes('ff4')||name.includes('tail7')) {material.color.set('#161b22');material.metalness=.35;material.roughness=.34;}
+        else if(name.includes('engine')||name.includes('black15')||name.includes('raidiator')) {material.color.set(name.includes('engine')?'#555b63':'#21272f');material.metalness=.15;material.roughness=.65;}
+        else if(name.includes('light5')) {material.metalness=.75;material.roughness=.18;}
         else {material.roughness=Math.max(material.roughness,.22);}
+        const anisotropy=Math.min(8,this.renderer!.capabilities.getMaxAnisotropy());
+        for(const texture of [material.map,material.normalMap,material.bumpMap,material.roughnessMap])if(texture)texture.anisotropy=anisotropy;
         if(name.includes('interior7')||name.includes('dash')){kind='interior';offset.set(0,.65,0);}
         // Partition wheel meshes into four spatial groups, keeping tyre and brake geometry together.
         if(name.includes('m8rim')||name.includes('caliper')) {
@@ -238,27 +308,34 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
               indices.forEach((idx,j)=>{for(let k=0;k<attr.itemSize;k++)values[j*attr.itemSize+k]=attr.getComponent(idx,k);});
               split.setAttribute(attrName,new T.BufferAttribute(values,attr.itemSize));
             }
-            const group=new T.Group();const partMesh=new T.Mesh(split,material);partMesh.castShadow=true;partMesh.receiveShadow=true;group.add(partMesh);this.detailed.add(group);
+            const group=new T.Group();const partMesh=new T.Mesh(split,material);partMesh.castShadow=true;partMesh.receiveShadow=true;partMesh.layers.enable(1);group.add(partMesh);this.detailed.add(group);
             this.detailedParts.push({group,origin:new T.Vector3(),offset:new T.Vector3(b>=2?.25:-.25,0,b%2?.9:-.9),kind:'wheels'});
           }
           nonIndexed.dispose();geometry.dispose();
         } else {
-          const group=new T.Group();const partMesh=new T.Mesh(geometry,material);partMesh.castShadow=true;partMesh.receiveShadow=true;group.add(partMesh);this.detailed.add(group);
+          const group=new T.Group();const partMesh=new T.Mesh(geometry,material);partMesh.castShadow=!name.includes('windows')&&!name.includes('headlight5');partMesh.receiveShadow=true;partMesh.layers.enable(1);group.add(partMesh);this.detailed.add(group);
           this.detailedParts.push({group,origin:new T.Vector3(),offset,kind});
         }
       }
       source.traverse(o=>{if(o instanceof T.Mesh){o.geometry.dispose();const materials=Array.isArray(o.material)?o.material:[o.material];materials.forEach(m=>m.dispose());}});
-      this.loading.set(false);this.applyInputs();
+      this.loading.set(false);this.applyInputs();this.shadowDirty=true;
     },undefined,()=>{this.loading.set(false);console.warn('Detailed M4 unavailable; using procedural concept.');});
   }
   private animate = (time:number) => {
     this.frame=requestAnimationFrame(this.animate);
     const dt=Math.min((time-this.lastTime)/1000,.05); this.lastTime=time;
     const ease=this.reducedMotion?1:1-Math.exp(-dt*5);
+    let geometryMoving=false;
     for(const part of [...this.parts,...this.detailedParts]) {
       const target=part.origin.clone();
       if(this.exploded && this.view!=='interior') target.add(part.offset);
+      if(part.group.position.distanceToSquared(target)>.000001)geometryMoving=true;
       part.group.position.lerp(target,ease);
+    }
+    if(this.renderer && (this.shadowDirty || geometryMoving && time-this.lastShadowUpdate>66)) {
+      this.contactShadow?.update(this.renderer,this.scene);
+      this.renderer.shadowMap.needsUpdate=true;
+      this.lastShadowUpdate=time;this.shadowDirty=false;
     }
     if(this.movingCamera && this.controls) {
       this.camera.position.lerp(this.targetPosition,ease); this.controls.target.lerp(this.targetLook,ease);
@@ -275,6 +352,8 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
     this.disposed=true;
     cancelAnimationFrame(this.frame); this.observer?.disconnect(); this.controls?.dispose();
     const materials=new Set<T.Material>(); this.scene.traverse(o=>{ if(o instanceof T.Mesh) {o.geometry.dispose(); for(const m of (Array.isArray(o.material)?o.material:[o.material])) materials.add(m);}});
-    materials.forEach(m=>m.dispose()); this.environment?.dispose(); this.renderer?.dispose();
+    const textures=new Set<T.Texture>();
+    materials.forEach(m=>{if(m instanceof T.MeshStandardMaterial)for(const value of Object.values(m))if(value instanceof T.Texture)textures.add(value);m.dispose();});
+    textures.forEach(t=>t.dispose());this.paintNormal?.dispose();this.contactShadow?.dispose();this.environment?.dispose();this.renderer?.dispose();
   }
 }

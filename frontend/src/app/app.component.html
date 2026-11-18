@@ -33,7 +33,7 @@
         @if(activePart()==='paint') {
           <div class="option-heading"><h3>El color de tu carácter.</h3><span>05 acabados</span></div>
           <div class="swatches" aria-label="Color de carrocería">@for(p of catalog().paints; track p.id){<button [style.--swatch]="p.hex" [class.selected]="paint()===p.id" [attr.aria-label]="p.name + ', ' + optionPrice(p)" [attr.aria-pressed]="paint()===p.id" [title]="p.name" (click)="choose('paint',p.id)">@if(paint()===p.id){<span>✓</span>}</button>}</div>
-          <div class="selection-info"><div><b>{{selectedPaint().name}}</b><small>Acabado metalizado @if(paint()==='white'){<span>· Concept</span>}</small></div><span>{{optionPrice(selectedPaint())}}</span></div>
+          <div class="selection-info"><div><b>{{selectedPaint().name}}</b><small>{{paint()==='white'?'Acabado sólido':'Acabado metalizado'}}</small></div><span>{{optionPrice(selectedPaint())}}</span></div>
           <div class="material-preview" [style.--paint]="selectedPaint().hex"><span>BMW INDIVIDUAL</span><div class="paint-surface"></div><small>Un acabado. Infinitas perspectivas.</small></div>
         }
         @if(activePart()==='wheels') {
