@@ -11,7 +11,7 @@ type Part = { group: T.Group; origin: T.Vector3; offset: T.Vector3; kind: string
   template: `<div #stage class="three-stage" role="img" aria-label="Modelo 3D conceptual del coche. Arrastra para girar; usa las flechas para rotar y más o menos para acercar." tabindex="0" (keydown)="keyboard($event)"></div>
     @if(loading()) { <div class="loading-model">Preparando tu BMW M4…</div> }
     @if (error()) { <div class="viewer-error"><span>El visor 3D necesita WebGL</span><p>Activa la aceleración gráfica de tu navegador para explorar el vehículo.</p></div> }`,
-  styles: [':host{display:block;position:absolute;inset:0}.three-stage{width:100%;height:100%;touch-action:none;outline-offset:-4px}.loading-model{position:absolute;bottom:55px;left:0;right:0;text-align:center;font-size:10px;letter-spacing:1px;color:#b8ca9b}.viewer-error{position:absolute;inset:30% 10%;text-align:center;color:#d7ef83}.viewer-error p{font-size:14px;color:#a4aaa1}']
+  styles: [':host{display:block;position:absolute;inset:0}.three-stage{width:100%;height:100%;touch-action:none;outline-offset:-4px}.loading-model{position:absolute;bottom:55px;left:0;right:0;text-align:center;font-size:10px;letter-spacing:1px;color:var(--muted)}.viewer-error{position:absolute;inset:30% 10%;text-align:center;color:var(--accent)}.viewer-error p{font-size:14px;color:var(--muted)}']
 })
 export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
   @ViewChild('stage') stage!: ElementRef<HTMLDivElement>;
@@ -65,13 +65,13 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
       this.environment = generator.fromScene(room, .04);
       this.scene.environment = this.environment.texture;
       generator.dispose(); room.dispose();
-      this.scene.add(new T.HemisphereLight('#dbe7f2', '#3c4331', 2.5));
+      this.scene.add(new T.HemisphereLight('#dbe7f2', '#242b38', 2.5));
       const key = new T.DirectionalLight('#ebf3ff', 4.2); key.position.set(3, 7, 5); key.castShadow = true;
       key.shadow.mapSize.set(2048, 2048); Object.assign(key.shadow.camera, {left:-5,right:5,top:5,bottom:-5}); key.shadow.bias=-.001; this.scene.add(key);
-      const rim = new T.DirectionalLight('#d9edb7', 3); rim.position.set(-4, 4, -3); this.scene.add(rim);
+      const rim = new T.DirectionalLight('#dceaff', 3); rim.position.set(-4, 4, -3); this.scene.add(rim);
       const floor = new T.Mesh(new T.CircleGeometry(5.5, 96), new T.ShadowMaterial({ color:'#000000',opacity:.55 }));
       floor.rotation.x = -Math.PI/2; floor.position.y = .015; floor.receiveShadow=true; this.scene.add(floor);
-      const ring = new T.Mesh(new T.RingGeometry(3.3,3.31,128),new T.MeshBasicMaterial({color:'#849174',transparent:true,opacity:.2,side:T.DoubleSide})); ring.rotation.x=-Math.PI/2; ring.position.y=.025; this.scene.add(ring);
+      const ring = new T.Mesh(new T.RingGeometry(3.3,3.31,128),new T.MeshBasicMaterial({color:'#3975ab',transparent:true,opacity:.2,side:T.DoubleSide})); ring.rotation.x=-Math.PI/2; ring.position.y=.025; this.scene.add(ring);
       this.buildCar(); this.scene.add(this.car); this.scene.add(this.detailed); this.loadDetailedCar();
       this.camera.position.copy(this.targetPosition);
       this.controls = new OrbitControls(this.camera, this.renderer.domElement);
@@ -158,7 +158,7 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
     this.box(interior,[.3,.25,1.52],[.7,.95,0],this.trim,.045);
     const screen=new T.MeshBasicMaterial({color:'#163c51'});
     this.box(interior,[.045,.20,.94],[.55,1.16,.16],screen,.018);
-    for(let i=0;i<6;i++) this.box(interior,[.05,.008,.07],[.52,1.11+i*.016,.25+i*.055],new T.MeshBasicMaterial({color:i<3?'#baf37a':'#5badcb'}),.002);
+    for(let i=0;i<6;i++) this.box(interior,[.05,.008,.07],[.52,1.11+i*.016,.25+i*.055],new T.MeshBasicMaterial({color:i<3?'#69b3ff':'#5badcb'}),.002);
     this.box(interior,[1.4,.20,.16],[-.1,.77,0],this.trim);
     this.box(interior,[.07,.1,.07],[.28,.92,0],this.alloy,.01);
     const steering=new T.Mesh(new T.TorusGeometry(.18,.023,10,40),this.trim); steering.rotation.y=Math.PI/2-.25; steering.position.set(.35,1.02,.45); interior.add(steering);
@@ -189,7 +189,7 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
     const tire=new T.Mesh(new T.TorusGeometry(.365,.105,20,64),rubber); tire.position.set(x,.48,z); tire.castShadow=true; group.add(tire);
     const disk=new T.Mesh(new T.CylinderGeometry(.32,.32,.11,48),this.trim); disk.rotation.x=Math.PI/2; disk.position.set(x,.48,z); group.add(disk);
     const brake=new T.Mesh(new T.CylinderGeometry(.25,.25,.12,48),new T.MeshStandardMaterial({color:'#626c71',metalness:.85,roughness:.4})); brake.rotation.x=Math.PI/2; brake.position.set(x,.48,z); group.add(brake);
-    this.box(group,[.1,.2,.14],[x+.19,.5,z],new T.MeshStandardMaterial({color:'#d2df52',metalness:.5,roughness:.3}),.02);
+    this.box(group,[.1,.2,.14],[x+.19,.5,z],new T.MeshStandardMaterial({color:'#0066b1',metalness:.5,roughness:.3}),.02);
     for(let i=0;i<10;i++) {
       const angle=i*Math.PI/5;
       const spoke=this.box(group,[.035,.29,.06],[x+Math.sin(angle)*.145,.48+Math.cos(angle)*.145,z+Math.sign(z)*.09],this.alloy,.008); spoke.rotation.z=-angle;
@@ -266,9 +266,9 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
     }
     // A restrained emissive accent identifies the material currently being configured.
     this.body.emissive.set(this.exploded && this.activePart==='paint'?this.paint:'#000000'); this.body.emissiveIntensity=.12;
-    this.leather.emissive.set(this.exploded && this.activePart==='interior'?'#a6b16f':'#000000'); this.leather.emissiveIntensity=.22;
-    this.alloy.emissive.set(this.exploded && this.activePart==='wheels'?'#9ea95e':'#000000'); this.alloy.emissiveIntensity=.22;
-    for(const [kind,materials] of [['paint',this.detailedPaints],['interior',this.detailedSeats],['wheels',this.detailedRims]] as const) materials.forEach(m=>{m.emissive.set(this.exploded&&this.activePart===kind?'#60743a':'#000000');m.emissiveIntensity=.12;});
+    this.leather.emissive.set(this.exploded && this.activePart==='interior'?'#0066b1':'#000000'); this.leather.emissiveIntensity=.22;
+    this.alloy.emissive.set(this.exploded && this.activePart==='wheels'?'#0066b1':'#000000'); this.alloy.emissiveIntensity=.22;
+    for(const [kind,materials] of [['paint',this.detailedPaints],['interior',this.detailedSeats],['wheels',this.detailedRims]] as const) materials.forEach(m=>{m.emissive.set(this.exploded&&this.activePart===kind?'#0066b1':'#000000');m.emissiveIntensity=.12;});
     this.controls?.update(dt); this.renderer?.render(this.scene,this.camera);
   };
   ngOnDestroy() {
