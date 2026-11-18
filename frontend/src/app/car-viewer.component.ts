@@ -7,12 +7,14 @@ import { FlakesTexture } from 'three/addons/textures/FlakesTexture.js';
 import { ContactShadow, createStudioEnvironment } from './studio-rendering';
 import { CabinMaterials } from './cabin-materials';
 import { CabinRendering } from './cabin-rendering';
+import { E46Car } from './e46-car';
 
 type Part = { group: T.Group; origin: T.Vector3; offset: T.Vector3; kind: string };
 @Component({
   selector: 'car-viewer', standalone: true,
-  template: `<div #stage class="three-stage" role="img" aria-label="Modelo 3D conceptual del coche. Arrastra para girar; usa las flechas para rotar y más o menos para acercar." tabindex="0" (keydown)="keyboard($event)"></div>
-    @if(loading()) { <div class="loading-model">Preparando tu BMW M4…</div> }
+  template: `<div #stage class="three-stage" role="img" [attr.aria-label]="'Modelo 3D BMW '+(model==='e46'?'M3 E46 GTR':'M4')+'. Arrastra para girar; usa las flechas para rotar y más o menos para acercar.'" tabindex="0" (keydown)="keyboard($event)"></div>
+    @if(model==='e46'?e46Loading():loading()) { <div class="loading-model">Preparando tu BMW {{model==='e46'?'M3 E46 GTR':'M4'}}…</div> }
+    @if(model==='e46' && e46LoadError()) { <div class="viewer-error"><span>No se ha podido cargar el M3 E46 GTR.</span><p>Recarga la página para volver a intentarlo.</p></div> }
     @if (error()) { <div class="viewer-error"><span>El visor 3D necesita WebGL</span><p>Activa la aceleración gráfica de tu navegador para explorar el vehículo.</p></div> }`,
   styles: [':host{display:block;position:absolute;inset:0}.three-stage{width:100%;height:100%;touch-action:none;outline-offset:-4px}.loading-model{position:absolute;bottom:55px;left:0;right:0;text-align:center;font-size:10px;letter-spacing:1px;color:var(--muted)}.viewer-error{position:absolute;inset:30% 10%;text-align:center;color:var(--accent)}.viewer-error p{font-size:14px;color:var(--muted)}']
 })
@@ -29,6 +31,8 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
   @Input() resetKey = 0;
   error = signal(false);
   loading = signal(true);
+  e46Loading = signal(false);
+  e46LoadError = signal(false);
   private renderer?: T.WebGLRenderer;
   private scene = new T.Scene();
   private camera = new T.PerspectiveCamera(30, 1, .025, 100);
@@ -60,6 +64,7 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
   private narrowViewport=false;
   private cabinMaterials?: CabinMaterials;
   private cabinRendering?: CabinRendering;
+  private e46?: E46Car;
 
   ngAfterViewInit() {
     try {
@@ -90,6 +95,7 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
       this.cabinMaterials=new CabinMaterials(Math.min(8,this.renderer.capabilities.getMaxAnisotropy()));
       this.body.normalMap=this.paintNormal; this.body.normalScale.set(.018,.018); this.body.clearcoatRoughness=.13;
       this.buildCar(); this.scene.add(this.car); this.scene.add(this.detailed); this.loadDetailedCar();
+      if(this.model==='e46')this.loadE46();
       this.car.traverse(object=>{if(object instanceof T.Mesh)object.layers.enable(1);});
       this.camera.position.copy(this.targetPosition);
       this.controls = new OrbitControls(this.camera, this.renderer.domElement);
@@ -102,6 +108,7 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
   }
   ngOnChanges(changes: SimpleChanges) {
     if(this.renderer) {
+      if(changes['model'] && this.model==='e46')this.loadE46();
       this.applyInputs();
       if(changes['model'] || changes['exploded'] || changes['view'])this.shadowDirty=true;
       if(changes['view'] || changes['resetKey'] || changes['exploded'])this.moveCamera();
@@ -112,9 +119,9 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
     this.cabinMaterials?.setUpholsteryColor(this.interior);
     this.body.color.set(this.paint); this.leather.color.set(this.interior);
     this.alloy.color.set(this.wheels==='forged'?'#353b3e':'#b6bdc2');
-    this.car.scale.set(this.model==='m2'?.94:1, 1, this.model==='i4'?1.02:1);
     this.detailed.visible=this.model==='m4' && this.detailedParts.length>0;
-    this.car.visible=!this.detailed.visible;
+    this.car.visible=this.model==='m4' && !this.detailed.visible;
+    if(this.e46){this.e46.group.visible=this.model==='e46';this.e46.update(this.paint,this.wheels,this.exploded,this.activePart);}
     for(const material of [this.body,...this.detailedPaints]) {
       material.color.set(this.paint);
       material.metalness=this.paint==='#e8e8de'?.08:this.paint==='#a2a8a6'?.24:.65;
@@ -126,8 +133,8 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
   }
   private moveCamera() {
     const inside=this.view==='interior';
-    this.targetPosition.set(...(inside?[-.30,1.12,-.38]:this.exploded?[7.8,4.2,8.0]:this.narrowViewport?[5.8,2.3,6.0]:[5.2,2.1,5.4]) as [number,number,number]);
-    this.targetLook.set(...(inside?[.68,.85,-.10]:[0,this.exploded?1:.65,0]) as [number,number,number]);
+    this.targetPosition.set(...(inside?(this.model==='e46'?[.10,1.12,-.36]:[-.30,1.12,-.38]):this.exploded?[7.8,4.2,8.0]:this.narrowViewport?[5.8,2.3,6.0]:[5.2,2.1,5.4]) as [number,number,number]);
+    this.targetLook.set(...(inside?(this.model==='e46'?[1,.94,-.08]:[.68,.85,-.10]):[0,this.exploded?1:.65,0]) as [number,number,number]);
     this.camera.fov=inside?68:30;this.camera.updateProjectionMatrix();
     if(this.controls) { this.controls.minDistance=inside?.05:4; this.controls.maxDistance=inside?2.5:12; this.controls.maxPolarAngle=inside?Math.PI:Math.PI/2-.02; this.controls.enableRotate=!inside; }
     this.movingCamera=true;
@@ -337,12 +344,25 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
       this.loading.set(false);this.applyInputs();this.shadowDirty=true;
     },undefined,()=>{this.loading.set(false);console.warn('Detailed M4 unavailable; using procedural concept.');});
   }
+  private loadE46() {
+    if(this.e46 || this.e46Loading() || this.e46LoadError())return;
+    this.e46Loading.set(true);
+    new GLTFLoader().load('/models/bmw-m3-e46-gtr.glb',gltf=>{
+      if(this.disposed)return;
+      this.e46=new E46Car(gltf.scene,this.cabinMaterials!,this.paintNormal!,Math.min(8,this.renderer!.capabilities.getMaxAnisotropy()));
+      this.scene.add(this.e46.group);this.applyInputs();this.shadowDirty=true;
+      new GLTFLoader().load('/models/bmw-e46-cabin.glb',cabin=>{
+        if(this.disposed)return;
+        this.e46!.addCabin(cabin.scene,this.cabinMaterials!);this.e46Loading.set(false);this.applyInputs();this.shadowDirty=true;
+      },undefined,()=>{this.e46Loading.set(false);console.warn('Detailed E46 cabin unavailable.');});
+    },undefined,()=>{this.e46Loading.set(false);this.e46LoadError.set(true);});
+  }
   private animate = (time:number) => {
     this.frame=requestAnimationFrame(this.animate);
     const dt=Math.min((time-this.lastTime)/1000,.05); this.lastTime=time;
     const ease=this.reducedMotion?1:1-Math.exp(-dt*5);
     let geometryMoving=false;
-    for(const part of [...this.parts,...this.detailedParts]) {
+    for(const part of [...this.parts,...this.detailedParts,...(this.e46?.parts??[])]) {
       const target=part.origin.clone();
       if(this.exploded && this.view!=='interior') target.add(part.offset);
       if(part.group.position.distanceToSquared(target)>.000001)geometryMoving=true;
@@ -363,7 +383,7 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
     this.alloy.emissive.set(this.exploded && this.activePart==='wheels'?'#0066b1':'#000000'); this.alloy.emissiveIntensity=.22;
     for(const [kind,materials] of [['paint',this.detailedPaints],['interior',this.detailedSeats],['wheels',this.detailedRims]] as const) materials.forEach(m=>{m.emissive.set(this.exploded&&this.activePart===kind?'#0066b1':'#000000');m.emissiveIntensity=.12;});
     this.controls?.update(dt);
-    if(this.renderer && this.view==='interior' && this.detailed.visible) {
+    if(this.renderer && this.view==='interior' && (this.detailed.visible || this.e46?.group.visible)) {
       if(!this.cabinRendering) {
         this.cabinRendering=new CabinRendering(this.renderer,this.scene,this.camera);
         const {clientWidth:w,clientHeight:h}=this.stage.nativeElement;
@@ -377,7 +397,7 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
     cancelAnimationFrame(this.frame); this.observer?.disconnect(); this.controls?.dispose();
     const materials=new Set<T.Material>(); this.scene.traverse(o=>{ if(o instanceof T.Mesh) {o.geometry.dispose(); for(const m of (Array.isArray(o.material)?o.material:[o.material])) materials.add(m);}});
     const textures=new Set<T.Texture>();
-    materials.forEach(m=>{if(m instanceof T.MeshStandardMaterial)for(const value of Object.values(m))if(value instanceof T.Texture)textures.add(value);m.dispose();});
+    materials.forEach(m=>{for(const value of Object.values(m))if(value instanceof T.Texture)textures.add(value);m.dispose();});
     textures.forEach(t=>t.dispose());this.cabinMaterials?.dispose();this.cabinRendering?.dispose();this.paintNormal?.dispose();this.contactShadow?.dispose();this.environment?.dispose();this.renderer?.dispose();
   }
 }

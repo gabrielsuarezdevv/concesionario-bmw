@@ -18,3 +18,6 @@
 .interior-view .model-watermark{visibility:hidden}.interior-view .scene-label{padding:8px;background:var(--overlay);border-radius:3px}.interior-view .scene-label small{top:25px;background:var(--overlay);padding:3px 6px;left:8px}.interior-view .concept-badge{background:var(--overlay)}.interior-view .orbit-hint{background:var(--overlay);padding:4px 8px;border-radius:3px}
 
 .summary-message{font-size:11px;color:var(--accent);line-height:1.6;margin:12px 0 0}.summary-message:empty{display:none}
+.model-grid.two-models{grid-template-columns:repeat(2,minmax(0,1fr))}@media(max-width:520px){.model-grid.two-models{grid-template-columns:1fr}}
+
+.model-grid.two-models .card-art{height:clamp(180px,20vw,230px)}.card-art img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}

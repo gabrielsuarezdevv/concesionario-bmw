@@ -26,7 +26,7 @@ export class AppComponent {
     let selection: Record<string,string>={};
     try { selection=shared?Object.fromEntries(query):JSON.parse(localStorage.getItem('atelier.configuration')||'{}'); } catch { /* Storage may be unavailable. */ }
     this.restore(selection);
-    this.http.get<Catalog>('/api/catalog').pipe(timeout(4000)).subscribe({next:data=>{this.catalog.set(data);this.apiOnline.set(true);},error:()=>this.apiOnline.set(false)});
+    this.http.get<Catalog>('/api/catalog').pipe(timeout(4000)).subscribe({next:data=>{this.catalog.set(data);if(!data.models.some(m=>m.id===this.model()))this.model.set(data.models[0].id);this.apiOnline.set(true);},error:()=>this.apiOnline.set(false)});
   }
   private restore(s:Record<string,string>) {
     if(!s || typeof s!=='object')return;
@@ -44,10 +44,17 @@ export class AppComponent {
     this.activePart.set(type);
     this.saved.set(false);
   }
-  chooseModel(id:string) { this.model.set(id);this.saved.set(false);this.reset(); document.getElementById('configurador')?.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'}); }
+  chooseModel(id:string) { if(!this.catalog().models.some(m=>m.id===id))return;this.model.set(id);this.saved.set(false);this.reset(); document.getElementById('configurador')?.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'}); }
   setView(view:string) { this.view.set(view); if(view==='interior'){this.exploded.set(false);this.autoRotate.set(false);this.activePart.set('interior');} }
   toggleExploded() { this.view.set('exterior'); this.exploded.update(v=>!v); }
   reset() { this.view.set('exterior');this.exploded.set(false);this.autoRotate.set(false);this.resetKey.update(v=>v+1); }
+  navigate(section:string,event:MouseEvent) {
+    if(event.ctrlKey||event.metaKey||event.shiftKey||event.altKey||event.button!==0)return;
+    event.preventDefault();
+    const url=new URL(location.href);url.hash=section;history.pushState(null,'',url);
+    const behavior=window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth';
+    if(section)document.getElementById(section)?.scrollIntoView({behavior});else window.scrollTo({top:0,behavior});
+  }
   openSummary() { this.summary.nativeElement.showModal(); }
   selection() { return {model:this.model(),paint:this.paint(),wheels:this.wheels(),interior:this.interior()}; }
   notify(text:string) { clearTimeout(this.toastTimer);this.toast.set(text);this.toastTimer=setTimeout(()=>this.toast.set(''),6500); }

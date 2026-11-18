@@ -25,13 +25,13 @@ Abre http://127.0.0.1:4200. Angular reenvía `/api` al servidor en el puerto 808
 
 ## Experiencia disponible
 
-- BMW M4 detallado en GLB, rotación 360° con ratón, gestos o flechas; zoom con rueda o +/−.
+- BMW M4 Competition y BMW M3 E46 GTR con archivos GLB independientes, rotación 360° con ratón, gestos o flechas; zoom con rueda o +/−. El E46 se descarga cuando se selecciona por primera vez (unos 4 MB de carrocería y 5,4 MB de habitáculo).
 - Iluminación de estudio generada localmente, pintura con barniz y microtextura, cristales con transmisión física y sombras de contacto proyectadas desde la geometría. Se conservan las texturas originales de carbono, neumáticos y detalles de las ruedas. El realismo sigue limitado por la malla y las texturas del modelo de origen.
 - Cámara interior desde el puesto del conductor.
 - Habitáculo con vinilo no metálico, mapas de detalle de cuero CC0 de Poly Haven y oclusión ambiental de corto alcance, calculada solo en la vista interior. Los cristales no participan como superficies opacas en ese cálculo. El color de tapicería usa una máscara espacial aproximada porque el GLB comparte materiales entre asientos y molduras.
 - Despiece animado por grupos visuales: carrocería, acristalamiento, habitáculo y cuatro ruedas. Se activa manualmente desde sus controles; cambiar pintura, llantas o tapicería conserva la vista elegida.
 - Cinco pinturas, dos acabados de llantas y tres colores de tapicería. Los cambios son de materiales; no sustituyen geometría por piezas OEM.
-- Catálogo ilustrativo M4, M2 e i4. **Solo el M4 tiene un modelo detallado**: M2/i4 usan geometría procedural conceptual. Sus fichas y precios son datos de demostración.
+- Catálogo de dos modelos: M4 Competition y M3 E46 GTR. M2 e i4 retirados del selector y de los presupuestos del servidor. Las configuraciones antiguas con modelos retirados vuelven al M4 al abrir la web. Las fichas, precios y opciones son de demostración; los acabados no representan un catálogo de fábrica del E46.
 - Resumen, guardado en Spring Boot/H2, restauración local, enlaces de configuración y descarga JSON.
 - Si el servidor no está disponible, la interfaz lo indica y permite guardar exclusivamente en el navegador. El presupuesto del servidor nunca acepta un total enviado por el cliente.
 - Navegación por teclado, diálogos nativos, avisos accesibles y respeto por movimiento reducido.
@@ -94,6 +94,10 @@ compose.yaml     Ejecución local con datos persistentes
 
 Mapas de normal y rugosidad de [Leather White](https://polyhaven.com/a/leather_white), de Rob Tuytel / Poly Haven, bajo CC0. Se sirven localmente a 1024×1024 (1,35 MB entre ambos); [créditos](frontend/public/textures/ATTRIBUTION.md). No se ha sustituido el M4 por otro modelo: el habitáculo conserva geometría y atlas originales de resolución limitada. Estos ajustes de materiales no equivalen a un interior fotorrealista. El proyecto mantiene la restricción de utilizar recursos gratuitos.
 
+"2001 BMW M3 GTR", de **Dave Love SketchFab**, bajo CC BY 4.0: [obra original](https://sketchfab.com/3d-models/2001-bmw-m3-gtr-6bb4d180cd0d454ba62fbfae24fc5155), [redistribución GLB](https://github.com/SulemanAsif0911/BMW-M3-History/blob/main/m3-gtr-e46-2001.glb). Conserva sus créditos embebidos; el adaptador selecciona los niveles de detalle para evitar geometría superpuesta. Carrocería GTR con habitáculo E46 adaptado y despiece por grupos, sin precisión mecánica. El precio base de 250.000 € es una referencia histórica de demostración, no una tasación actual ni disponibilidad de venta; [referencia BMW M](https://www.bmw-m.com/en/topics/magazine-article-pool/bmw-m3-gtr-strassenversion.html).
+
 La animación separa grupos de geometría/materiales y no representa un desmontaje mecánico exacto. El modelo del autor puede incluir accesorios distintos de la ficha ilustrativa. La experiencia es un prototipo funcional, no un concesionario operativo ni una réplica del configurador oficial. Para una versión comercial faltan catálogo/precios reales, modelos autorizados de cada vehículo, piezas independientes, autenticación administrativa, límites de uso de la API y un servicio de atención comercial.
 
 Proyecto independiente, sin afiliación con BMW AG. Marcas y nombres pertenecen a sus titulares.
+
+El habitáculo E46 se ha extraído del modelo gratuito de **Merc_TV**, bajo CC BY 4.0 ([fuente](https://sketchfab.com/3d-models/bmw-3-series-e46-1998-2006-2e32a3e273ab482b83970603539de06a), [redistribución](https://github.com/AzizSyed27/MyE46/blob/main/public/models/e46.glb)). Incluye salpicadero, volante, asientos y paneles independientes, con materiales adaptados e instrumentación ilustrativa. Es una adaptación de la plataforma E46 a la carrocería GTR; no reproduce exactamente el interior de fábrica. El extractor reproducible está en `tools/extract-e46-cabin.cjs` y requiere el GLB fuente como argumento y las dependencias del frontend instaladas.

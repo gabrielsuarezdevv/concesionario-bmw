@@ -20,7 +20,7 @@ export class CabinMaterials {
 
   setUpholsteryColor(color: string) { this.upholstery.value.set(color); }
 
-  leather(trimColor = '#111418'): T.MeshPhysicalMaterial {
+  leather(trimColor = '#111418', upholsteryOnly = false): T.MeshPhysicalMaterial {
     const material = new T.MeshPhysicalMaterial({
       color: '#ffffff', metalness: 0, roughness: 1,
       normalMap: this.normal, normalScale: new T.Vector2(.32, .32),
@@ -41,14 +41,14 @@ export class CabinMaterials {
         bool onSeat = vCabinPosition.x < .18 && vCabinPosition.x > -1.72
           && vCabinPosition.y > .43 && vCabinPosition.y < 1.23
           && abs(vCabinPosition.z) > .16 && abs(vCabinPosition.z) < .66;
-        diffuseColor.rgb *= onSeat ? cabinUpholstery : cabinTrim;
+        diffuseColor.rgb *= ${upholsteryOnly ? 'cabinUpholstery' : 'onSeat ? cabinUpholstery : cabinTrim'};
       `);
       shader.fragmentShader = shader.fragmentShader.replace(
         '#include <roughnessmap_fragment>',
         'float roughnessFactor = mix(0.68, 0.92, texture2D(roughnessMap, vRoughnessMapUv).g);'
       );
     };
-    material.customProgramCacheKey = () => 'cabin-leather-v2';
+    material.customProgramCacheKey = () => 'cabin-leather-v2-'+upholsteryOnly;
     return material;
   }
 
