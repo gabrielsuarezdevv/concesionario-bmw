@@ -37,7 +37,13 @@ export class AppComponent {
     if(c.interiors.some(x=>x.id===s['interior']))this.interior.set(s['interior']);
   }
   selectPart(part:string) { this.activePart.set(part); if(part!=='interior' && this.view()==='interior') this.view.set('exterior'); }
-  choose(type:string,id:string) { if(type==='paint')this.paint.set(id); if(type==='wheels')this.wheels.set(id); if(type==='interior')this.interior.set(id); this.activePart.set(type);if(this.view()!=='interior')this.exploded.set(true);this.saved.set(false); }
+  choose(type:string,id:string) {
+    if(type==='paint')this.paint.set(id);
+    if(type==='wheels')this.wheels.set(id);
+    if(type==='interior')this.interior.set(id);
+    this.activePart.set(type);
+    this.saved.set(false);
+  }
   chooseModel(id:string) { this.model.set(id);this.saved.set(false);this.reset(); document.getElementById('configurador')?.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'}); }
   setView(view:string) { this.view.set(view); if(view==='interior'){this.exploded.set(false);this.autoRotate.set(false);this.activePart.set('interior');} }
   toggleExploded() { this.view.set('exterior'); this.exploded.update(v=>!v); }

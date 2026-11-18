@@ -27,7 +27,7 @@ Abre http://127.0.0.1:4200. Angular reenvía `/api` al servidor en el puerto 808
 
 - BMW M4 detallado en GLB, rotación 360° con ratón, gestos o flechas; zoom con rueda o +/−.
 - Cámara interior desde el puesto del conductor.
-- Despiece animado por grupos visuales: carrocería, acristalamiento, habitáculo y cuatro ruedas. Cambiar un acabado desde el exterior activa el despiece y destaca el grupo elegido.
+- Despiece animado por grupos visuales: carrocería, acristalamiento, habitáculo y cuatro ruedas. Se activa manualmente desde sus controles; cambiar pintura, llantas o tapicería conserva la vista elegida.
 - Cinco pinturas, dos acabados de llantas y tres colores de tapicería. Los cambios son de materiales; no sustituyen geometría por piezas OEM.
 - Catálogo ilustrativo M4, M2 e i4. **Solo el M4 tiene un modelo detallado**: M2/i4 usan geometría procedural conceptual. Sus fichas y precios son datos de demostración.
 - Resumen, guardado en Spring Boot/H2, restauración local, enlaces de configuración y descarga JSON.
