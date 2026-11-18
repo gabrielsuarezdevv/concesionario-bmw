@@ -1,0 +1,9 @@
+{
+  "$schema": "./node_modules/@angular/cli/lib/config/schema.json", "version": 1,
+  "projects": { "atelier": { "projectType": "application", "root": "", "sourceRoot": "src",
+    "architect": {
+      "build": { "builder": "@angular/build:application", "options": { "browser": "src/main.ts", "index": "src/index.html", "tsConfig": "tsconfig.json", "styles": ["src/styles.css"], "outputPath": "dist/atelier", "assets": [{"glob":"**/*","input":"public"}] }, "configurations": { "production": { "outputHashing": "all", "budgets": [{"type":"initial","maximumWarning":"1.5MB","maximumError":"2MB"}] }, "development": {"optimization":false,"sourceMap":true} }, "defaultConfiguration": "production" },
+      "serve": { "builder": "@angular/build:dev-server", "options": { "buildTarget": "atelier:build:development", "proxyConfig": "proxy.conf.json" } }
+    }
+  } }
+}
