@@ -1,0 +1,10 @@
+services:
+  atelier:
+    build: .
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - atelier-data:/app/data
+    restart: unless-stopped
+volumes:
+  atelier-data:

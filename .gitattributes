@@ -1,0 +1,4 @@
+* text=auto
+*.glb binary
+backend/mvnw text eol=lf
+*.cmd text eol=crlf
