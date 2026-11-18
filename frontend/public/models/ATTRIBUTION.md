@@ -20,33 +20,26 @@ occlusion adds depth to cabin joins. Shared trim materials use a spatial upholst
 this is an approximation, not a reconstruction of the factory upholstery layout.
 This is a visual demonstration, not a mechanically accurate engineering disassembly.
 
-## BMW M3 E46 GTR
+## BMW 330i E46 sedan
 
-"2001 BMW M3 GTR" by Dave Love SketchFab (https://sketchfab.com/Tyler_Dave).
-Original: https://sketchfab.com/3d-models/2001-bmw-m3-gtr-6bb4d180cd0d454ba62fbfae24fc5155
-License: CC BY 4.0 — https://creativecommons.org/licenses/by/4.0/
-Redistributed, unmodified GLB obtained from:
-https://github.com/SulemanAsif0911/BMW-M3-History/blob/main/m3-gtr-e46-2001.glb
-SHA-256: 7a13e3945b088c8917990fd74736fddb0982437998198852dca0e0e41d4c055e
-The original author, source, title and license are preserved in the GLB asset metadata.
-
-Runtime changes: choose the highest available level of detail per assembly, normalize scale and
-orientation, configurable body paint, rim finish and approximate seat tint, physical glass,
-leather surface detail and animated separation of visual groups. The original cabin atlas is retained.
-The GTR exterior has its own geometry and does not reuse the M4 cabin.
-The visible GTR bodykit is an artistic model, not an exact factory or mechanical reconstruction.
-The preview JPEGs in previews/ are captures of these credited models rendered in this project's viewer.
-
-## Adapted E46 cabin
-
-"BMW 3-Series E46 1998-2006" by Merc_TV (https://sketchfab.com/szymonpasterczyk), CC BY 4.0.
+"BMW 3-Series E46 1998-2006" by Merc_TV (https://sketchfab.com/szymonpasterczyk).
 Original: https://sketchfab.com/3d-models/bmw-3-series-e46-1998-2006-2e32a3e273ab482b83970603539de06a
+License: CC BY 4.0 — https://creativecommons.org/licenses/by/4.0/
 Source GLB redistribution: https://github.com/AzizSyed27/MyE46/blob/main/public/models/e46.glb
-The cabin-only derivative is bmw-e46-cabin.glb; regenerate with tools/extract-e46-cabin.cjs.
-Changes: extracted dashboard, steering wheel, front seats, door panels and lower carpet, normalized
-coordinates, removed the sedan roof lining above the footwells, adapted materials and seat colours.
-Dial graphics are original code-generated illustrations. The adaptation combines an E46 cabin
-with the GTR exterior; it is not an exact factory GTR interior or a photorealistic reconstruction.
-The source author and license are embedded in the derivative GLB.
+Bundled file: bmw-e46-sedan.glb. Source geometry and textures are preserved; author, source and
+license metadata have been added to the GLB. Both exterior and interior belong to this one model.
 
+Runtime changes: select the sedan's 330i badge, ZHP front / M-tech rear bumper, stock mirrors and
+solid roof; hide alternative overlapping bodykits, roofs and badges. Select one set of the source
+Style 135 or BBS wheels. Apply a common scale/orientation transform to the entire car, configurable
+body paint, wheel finish and seat upholstery. Physical glass, CC0 leather detail and neutral cabin
+materials are applied locally. Original code-generated gauge artwork and the project's BMW badge
+are projected onto the existing instrument/badge geometry. No foreign cabin meshes are added.
+
+The model is a customized E46 sedan, not an M3 or GTR. Its cabin has detailed geometry but limited
+source texture detail; this is not a photorealistic or factory-accurate digital twin. The 35,000 EUR
+base price is a fictional demonstration value, not a market valuation. Visual separation of groups
+is illustrative, not a mechanically accurate disassembly.
+
+Preview JPEGs in previews/ are captures of these credited models rendered by this project's viewer.
 BMW names and marks belong to BMW AG; this project is independent and unaffiliated.

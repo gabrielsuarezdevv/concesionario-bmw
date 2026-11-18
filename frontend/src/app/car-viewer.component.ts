@@ -12,9 +12,9 @@ import { E46Car } from './e46-car';
 type Part = { group: T.Group; origin: T.Vector3; offset: T.Vector3; kind: string };
 @Component({
   selector: 'car-viewer', standalone: true,
-  template: `<div #stage class="three-stage" role="img" [attr.aria-label]="'Modelo 3D BMW '+(model==='e46'?'M3 E46 GTR':'M4')+'. Arrastra para girar; usa las flechas para rotar y más o menos para acercar.'" tabindex="0" (keydown)="keyboard($event)"></div>
-    @if(model==='e46'?e46Loading():loading()) { <div class="loading-model">Preparando tu BMW {{model==='e46'?'M3 E46 GTR':'M4'}}…</div> }
-    @if(model==='e46' && e46LoadError()) { <div class="viewer-error"><span>No se ha podido cargar el M3 E46 GTR.</span><p>Recarga la página para volver a intentarlo.</p></div> }
+  template: `<div #stage class="three-stage" role="img" [attr.aria-label]="'Modelo 3D BMW '+(model==='e46'?'330i E46':'M4')+'. Arrastra para girar; usa las flechas para rotar y más o menos para acercar.'" tabindex="0" (keydown)="keyboard($event)"></div>
+    @if(model==='e46'?e46Loading():loading()) { <div class="loading-model">Preparando tu BMW {{model==='e46'?'330i E46':'M4'}}…</div> }
+    @if(model==='e46' && e46LoadError()) { <div class="viewer-error"><span>No se ha podido cargar el 330i E46.</span><p>Recarga la página para volver a intentarlo.</p></div> }
     @if (error()) { <div class="viewer-error"><span>El visor 3D necesita WebGL</span><p>Activa la aceleración gráfica de tu navegador para explorar el vehículo.</p></div> }`,
   styles: [':host{display:block;position:absolute;inset:0}.three-stage{width:100%;height:100%;touch-action:none;outline-offset:-4px}.loading-model{position:absolute;bottom:55px;left:0;right:0;text-align:center;font-size:10px;letter-spacing:1px;color:var(--muted)}.viewer-error{position:absolute;inset:30% 10%;text-align:center;color:var(--accent)}.viewer-error p{font-size:14px;color:var(--muted)}']
 })
@@ -134,7 +134,7 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
   private moveCamera() {
     const inside=this.view==='interior';
     this.targetPosition.set(...(inside?(this.model==='e46'?[.10,1.12,-.36]:[-.30,1.12,-.38]):this.exploded?[7.8,4.2,8.0]:this.narrowViewport?[5.8,2.3,6.0]:[5.2,2.1,5.4]) as [number,number,number]);
-    this.targetLook.set(...(inside?(this.model==='e46'?[1,.94,-.08]:[.68,.85,-.10]):[0,this.exploded?1:.65,0]) as [number,number,number]);
+    this.targetLook.set(...(inside?(this.model==='e46'?[1,.72,-.12]:[.68,.85,-.10]):[0,this.exploded?1:.65,0]) as [number,number,number]);
     this.camera.fov=inside?68:30;this.camera.updateProjectionMatrix();
     if(this.controls) { this.controls.minDistance=inside?.05:4; this.controls.maxDistance=inside?2.5:12; this.controls.maxPolarAngle=inside?Math.PI:Math.PI/2-.02; this.controls.enableRotate=!inside; }
     this.movingCamera=true;
@@ -347,14 +347,10 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
   private loadE46() {
     if(this.e46 || this.e46Loading() || this.e46LoadError())return;
     this.e46Loading.set(true);
-    new GLTFLoader().load('/models/bmw-m3-e46-gtr.glb',gltf=>{
+    new GLTFLoader().load('/models/bmw-e46-sedan.glb',gltf=>{
       if(this.disposed)return;
       this.e46=new E46Car(gltf.scene,this.cabinMaterials!,this.paintNormal!,Math.min(8,this.renderer!.capabilities.getMaxAnisotropy()));
-      this.scene.add(this.e46.group);this.applyInputs();this.shadowDirty=true;
-      new GLTFLoader().load('/models/bmw-e46-cabin.glb',cabin=>{
-        if(this.disposed)return;
-        this.e46!.addCabin(cabin.scene,this.cabinMaterials!);this.e46Loading.set(false);this.applyInputs();this.shadowDirty=true;
-      },undefined,()=>{this.e46Loading.set(false);console.warn('Detailed E46 cabin unavailable.');});
+      this.scene.add(this.e46.group);this.e46Loading.set(false);this.applyInputs();this.shadowDirty=true;
     },undefined,()=>{this.e46Loading.set(false);this.e46LoadError.set(true);});
   }
   private animate = (time:number) => {
