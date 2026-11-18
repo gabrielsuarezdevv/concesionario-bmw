@@ -5,6 +5,8 @@ import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.j
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { FlakesTexture } from 'three/addons/textures/FlakesTexture.js';
 import { ContactShadow, createStudioEnvironment } from './studio-rendering';
+import { CabinMaterials } from './cabin-materials';
+import { CabinRendering } from './cabin-rendering';
 
 type Part = { group: T.Group; origin: T.Vector3; offset: T.Vector3; kind: string };
 @Component({
@@ -56,6 +58,8 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
   private lastShadowUpdate=0;
   private paintNormal?: T.CanvasTexture;
   private narrowViewport=false;
+  private cabinMaterials?: CabinMaterials;
+  private cabinRendering?: CabinRendering;
 
   ngAfterViewInit() {
     try {
@@ -83,6 +87,7 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
       this.paintNormal = new T.CanvasTexture(new FlakesTexture(128, 128));
       this.paintNormal.wrapS=this.paintNormal.wrapT=T.RepeatWrapping; this.paintNormal.repeat.set(100,100);
       this.paintNormal.anisotropy=Math.min(8,this.renderer.capabilities.getMaxAnisotropy());
+      this.cabinMaterials=new CabinMaterials(Math.min(8,this.renderer.capabilities.getMaxAnisotropy()));
       this.body.normalMap=this.paintNormal; this.body.normalScale.set(.018,.018); this.body.clearcoatRoughness=.13;
       this.buildCar(); this.scene.add(this.car); this.scene.add(this.detailed); this.loadDetailedCar();
       this.car.traverse(object=>{if(object instanceof T.Mesh)object.layers.enable(1);});
@@ -103,6 +108,8 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
     }
   }
   private applyInputs() {
+    this.scene.background=this.view==='interior'?new T.Color('#8b929b'):null;
+    this.cabinMaterials?.setUpholsteryColor(this.interior);
     this.body.color.set(this.paint); this.leather.color.set(this.interior);
     this.alloy.color.set(this.wheels==='forged'?'#353b3e':'#b6bdc2');
     this.car.scale.set(this.model==='m2'?.94:1, 1, this.model==='i4'?1.02:1);
@@ -113,7 +120,6 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
       material.metalness=this.paint==='#e8e8de'?.08:this.paint==='#a2a8a6'?.24:.65;
       material.roughness=this.paint==='#e8e8de'?.32:.28;
     }
-    this.detailedSeats.forEach(m=>m.color.set(this.interior));
     this.detailedRims.forEach(m=>{m.color.set(this.wheels==='forged'?'#505965':'#e2e6eb');m.metalness=this.wheels==='forged'?.85:.65;m.roughness=.32;});
     this.parts.filter(p=>p.kind==='roof').forEach(p=>p.group.visible=this.view!=='interior');
     if(this.controls) { this.controls.autoRotate=this.autoRotate && this.view==='exterior' && !this.reducedMotion; this.controls.autoRotateSpeed=.65; }
@@ -223,6 +229,7 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
     const {clientWidth:w,clientHeight:h}=this.stage.nativeElement; if(!w||!h)return;
     this.camera.aspect=w/h; this.camera.updateProjectionMatrix();
     if(this.renderer){this.renderer.transmissionResolutionScale=w<600?.5:1;this.renderer.setSize(w,h);}
+    this.cabinRendering?.resize(w,h,this.renderer?.getPixelRatio()??1);
     if(this.narrowViewport!==(w<520)) {
       this.narrowViewport=w<520;
       if(this.view==='exterior'&&!this.exploded)this.moveCamera();
@@ -240,7 +247,7 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
       for(const mesh of meshes) {
         const original=(Array.isArray(mesh.material)?mesh.material[0]:mesh.material) as T.MeshStandardMaterial;
         const name=original.name.toLowerCase();
-        const geometry=mesh.geometry.clone().applyMatrix4(new T.Matrix4().multiplyMatrices(normalize,mesh.matrixWorld));
+        let geometry=mesh.geometry.clone().applyMatrix4(new T.Matrix4().multiplyMatrices(normalize,mesh.matrixWorld));
         let material=original.clone() as T.MeshStandardMaterial;
         let kind='structure';let offset=new T.Vector3();
         if(name.includes('zx1')||name.includes('livery')) {
@@ -255,9 +262,18 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
             clearcoat:.7,clearcoatRoughness:.25,bumpMap:original.map,bumpScale:.0015,envMapIntensity:.7
           });
           kind='structure';offset.set(0,1.25,0);
-        } else if(name.includes('interior18')||name.includes('interior23')) {
-          material.map=null;material.color.set(this.interior);material.roughness=.8;material.metalness=0;
-          this.detailedSeats.push(material);kind='interior';offset.set(-.1,.7,0);
+        } else if(name.includes('interior18')||name.includes('interior23')||name.includes('pillars')||name.includes('black16')) {
+          material=this.cabinMaterials!.leather(name.includes('interior18')?'#30343a':'#111418');
+          geometry=this.cabinMaterials!.addDetailUVs(geometry);
+          if(name.includes('interior')){this.detailedSeats.push(material);kind='interior';offset.set(-.1,.7,0);}
+        } else if(name.includes('interior7')) {
+          material=this.cabinMaterials!.dashboard(original);
+          geometry=this.cabinMaterials!.addDetailUVs(geometry);
+          kind='interior';offset.set(0,.65,0);
+        } else if(name.includes('dash')) {
+          material.metalness=0;material.roughness=.4;material.envMapIntensity=.2;
+          material.emissiveMap=original.map;material.emissive.set('#ffffff');material.emissiveIntensity=.22;
+          kind='interior';offset.set(0,.65,0);
         } else if(name.includes('m8rim') && !name.includes('001')) {
           material.metalness=.95;material.roughness=.24;this.detailedRims.push(material);kind='wheels';
           material.onBeforeCompile=shader=>{
@@ -284,11 +300,10 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
           material=glass;kind='glass';offset.set(0,1.5,0);
         }
         else if(name.includes('redlight')) {material.emissive.set('#d10816');material.emissiveIntensity=.7;}
-        else if(name.includes('pillars')) {material.metalness=.15;material.roughness=.38;kind='structure';offset.set(0,.25,0);}
         else if(name.includes('headlight5')) {material.color.set('#aebdcd');material.opacity=.28;material.transparent=true;material.depthWrite=false;material.roughness=.08;material.envMapIntensity=1.3;}
-        else if(name.includes('chrome5')||name.includes('white4')) {material.color.set('#adb6c2');material.metalness=.85;material.roughness=.26;}
+        else if(name.includes('chrome5')||name.includes('white4')) {material.color.set('#92989f');material.metalness=.7;material.roughness=.38;}
         else if(name.includes('caliper')) {material.color.set('#0066b1');material.metalness=.5;material.roughness=.36;}
-        else if(name.includes('black16')||name.includes('piggrill')||name.includes('ff4')||name.includes('tail7')) {material.color.set('#161b22');material.metalness=.35;material.roughness=.34;}
+        else if(name.includes('piggrill')||name.includes('ff4')||name.includes('tail7')) {material.color.set('#161b22');material.metalness=.35;material.roughness=.34;}
         else if(name.includes('engine')||name.includes('black15')||name.includes('raidiator')) {material.color.set(name.includes('engine')?'#555b63':'#21272f');material.metalness=.15;material.roughness=.65;}
         else if(name.includes('light5')) {material.metalness=.75;material.roughness=.18;}
         else {material.roughness=Math.max(material.roughness,.22);}
@@ -308,12 +323,13 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
               indices.forEach((idx,j)=>{for(let k=0;k<attr.itemSize;k++)values[j*attr.itemSize+k]=attr.getComponent(idx,k);});
               split.setAttribute(attrName,new T.BufferAttribute(values,attr.itemSize));
             }
-            const group=new T.Group();const partMesh=new T.Mesh(split,material);partMesh.castShadow=true;partMesh.receiveShadow=true;partMesh.layers.enable(1);group.add(partMesh);this.detailed.add(group);
+            const group=new T.Group();const partMesh=new T.Mesh(split,material);partMesh.castShadow=true;partMesh.receiveShadow=true;partMesh.layers.enable(1);partMesh.layers.enable(2);group.add(partMesh);this.detailed.add(group);
             this.detailedParts.push({group,origin:new T.Vector3(),offset:new T.Vector3(b>=2?.25:-.25,0,b%2?.9:-.9),kind:'wheels'});
           }
           nonIndexed.dispose();geometry.dispose();
         } else {
           const group=new T.Group();const partMesh=new T.Mesh(geometry,material);partMesh.castShadow=!name.includes('windows')&&!name.includes('headlight5');partMesh.receiveShadow=true;partMesh.layers.enable(1);group.add(partMesh);this.detailed.add(group);
+          if(!material.transparent && !(material instanceof T.MeshPhysicalMaterial && material.transmission>0))partMesh.layers.enable(2);
           this.detailedParts.push({group,origin:new T.Vector3(),offset,kind});
         }
       }
@@ -346,7 +362,15 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
     this.leather.emissive.set(this.exploded && this.activePart==='interior'?'#0066b1':'#000000'); this.leather.emissiveIntensity=.22;
     this.alloy.emissive.set(this.exploded && this.activePart==='wheels'?'#0066b1':'#000000'); this.alloy.emissiveIntensity=.22;
     for(const [kind,materials] of [['paint',this.detailedPaints],['interior',this.detailedSeats],['wheels',this.detailedRims]] as const) materials.forEach(m=>{m.emissive.set(this.exploded&&this.activePart===kind?'#0066b1':'#000000');m.emissiveIntensity=.12;});
-    this.controls?.update(dt); this.renderer?.render(this.scene,this.camera);
+    this.controls?.update(dt);
+    if(this.renderer && this.view==='interior' && this.detailed.visible) {
+      if(!this.cabinRendering) {
+        this.cabinRendering=new CabinRendering(this.renderer,this.scene,this.camera);
+        const {clientWidth:w,clientHeight:h}=this.stage.nativeElement;
+        this.cabinRendering.resize(w,h,this.renderer.getPixelRatio());
+      }
+      this.cabinRendering.render(dt);
+    } else this.renderer?.render(this.scene,this.camera);
   };
   ngOnDestroy() {
     this.disposed=true;
@@ -354,6 +378,6 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
     const materials=new Set<T.Material>(); this.scene.traverse(o=>{ if(o instanceof T.Mesh) {o.geometry.dispose(); for(const m of (Array.isArray(o.material)?o.material:[o.material])) materials.add(m);}});
     const textures=new Set<T.Texture>();
     materials.forEach(m=>{if(m instanceof T.MeshStandardMaterial)for(const value of Object.values(m))if(value instanceof T.Texture)textures.add(value);m.dispose();});
-    textures.forEach(t=>t.dispose());this.paintNormal?.dispose();this.contactShadow?.dispose();this.environment?.dispose();this.renderer?.dispose();
+    textures.forEach(t=>t.dispose());this.cabinMaterials?.dispose();this.cabinRendering?.dispose();this.paintNormal?.dispose();this.contactShadow?.dispose();this.environment?.dispose();this.renderer?.dispose();
   }
 }

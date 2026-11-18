@@ -14,6 +14,10 @@ Runtime modifications: normalized scale/orientation, configurable paint and seat
 replaced decorative livery material, physical glass transmission and animated separation of material groups.
 The original carbon-fiber, tyre, wheel and badge textures are retained; runtime materials are adjusted
 for clear-coated paint, metal and rubber. Studio reflections and contact shadows are generated locally.
+Cabin vinyl is rendered as a dielectric rather than metallic. CC0 leather normal/roughness detail
+is applied with secondary UVs (see ../textures/ATTRIBUTION.md), and short-range screen-space
+occlusion adds depth to cabin joins. Shared trim materials use a spatial upholstery colour mask;
+this is an approximation, not a reconstruction of the factory upholstery layout.
 This is a visual demonstration, not a mechanically accurate engineering disassembly.
 
 The M2 and i4 use original procedural concept geometry, not replicas of those vehicles.

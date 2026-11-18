@@ -28,6 +28,7 @@ Abre http://127.0.0.1:4200. Angular reenvía `/api` al servidor en el puerto 808
 - BMW M4 detallado en GLB, rotación 360° con ratón, gestos o flechas; zoom con rueda o +/−.
 - Iluminación de estudio generada localmente, pintura con barniz y microtextura, cristales con transmisión física y sombras de contacto proyectadas desde la geometría. Se conservan las texturas originales de carbono, neumáticos y detalles de las ruedas. El realismo sigue limitado por la malla y las texturas del modelo de origen.
 - Cámara interior desde el puesto del conductor.
+- Habitáculo con vinilo no metálico, mapas de detalle de cuero CC0 de Poly Haven y oclusión ambiental de corto alcance, calculada solo en la vista interior. Los cristales no participan como superficies opacas en ese cálculo. El color de tapicería usa una máscara espacial aproximada porque el GLB comparte materiales entre asientos y molduras.
 - Despiece animado por grupos visuales: carrocería, acristalamiento, habitáculo y cuatro ruedas. Se activa manualmente desde sus controles; cambiar pintura, llantas o tapicería conserva la vista elegida.
 - Cinco pinturas, dos acabados de llantas y tres colores de tapicería. Los cambios son de materiales; no sustituyen geometría por piezas OEM.
 - Catálogo ilustrativo M4, M2 e i4. **Solo el M4 tiene un modelo detallado**: M2/i4 usan geometría procedural conceptual. Sus fichas y precios son datos de demostración.
@@ -90,6 +91,8 @@ compose.yaml     Ejecución local con datos persistentes
 ## Modelo 3D y alcance
 
 “BMW M4 Competition M Package” por **𝙎𝙍𝙏 𝙋𝙚𝙧𝙛𝙤𝙢𝙖𝙣𝙘𝙚™**, publicado bajo [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). [Fuente original](https://sketchfab.com/3d-models/bmw-m4-competition-m-package-5c0a2dafb1ad408d9fc9eeef9aee531b), [redistribución GLB](https://github.com/coopercodes/bmwGLB) y [atribución y cambios](frontend/public/models/ATTRIBUTION.md). El GLB original conserva los créditos embebidos y pesa unos 23 MB; se descarga una vez por sesión del visor. Las tipografías DM Sans y Manrope se sirven localmente; sus licencias están en los paquetes de Fontsource.
+
+Mapas de normal y rugosidad de [Leather White](https://polyhaven.com/a/leather_white), de Rob Tuytel / Poly Haven, bajo CC0. Se sirven localmente a 1024×1024 (1,35 MB entre ambos); [créditos](frontend/public/textures/ATTRIBUTION.md). No se ha sustituido el M4 por otro modelo: el habitáculo conserva geometría y atlas originales de resolución limitada. Estos ajustes de materiales no equivalen a un interior fotorrealista. El proyecto mantiene la restricción de utilizar recursos gratuitos.
 
 La animación separa grupos de geometría/materiales y no representa un desmontaje mecánico exacto. El modelo del autor puede incluir accesorios distintos de la ficha ilustrativa. La experiencia es un prototipo funcional, no un concesionario operativo ni una réplica del configurador oficial. Para una versión comercial faltan catálogo/precios reales, modelos autorizados de cada vehículo, piezas independientes, autenticación administrativa, límites de uso de la API y un servicio de atención comercial.
 
