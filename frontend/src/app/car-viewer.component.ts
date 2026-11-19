@@ -14,11 +14,12 @@ import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import { ViewerQuality } from './viewer-quality';
 import { AssembledCar } from './assembled-car';
 import { ViewerFrameClock } from './viewer-frame-clock';
+import { CabinLook, CABIN_FIELD_OF_VIEW } from './cabin-look';
 
 type Part = { group: T.Group; origin: T.Vector3; offset: T.Vector3; kind: string };
 @Component({
   selector: 'car-viewer', standalone: true,
-  template: `<div #stage class="three-stage" role="img" [attr.aria-label]="'Modelo 3D BMW '+modelName+'. Arrastra para girar; usa las flechas para rotar y más o menos para acercar.'" tabindex="0" (keydown)="keyboard($event)"></div>
+  template: `<div #stage class="three-stage" [style.cursor]="view==='interior'?'grab':null" role="img" [attr.aria-label]="'Modelo 3D BMW '+modelName+(view==='interior'?'. Interior: arrastra o usa las cuatro flechas para mirar alrededor; más y menos ajustan el ángulo.':'. Arrastra para girar; usa las flechas para rotar y más o menos para acercar.')" tabindex="0" (keydown)="keyboard($event)"></div>
     @if(modelLoading()) { <div class="loading-model">Preparando tu BMW {{modelName}}…</div> }
     @if(modelLoadError()) { <div class="viewer-error"><span>No se ha podido cargar el {{modelName}}.</span><p>Recarga la página para volver a intentarlo.</p></div> }
     @if (error()) { <div class="viewer-error"><span>El visor 3D necesita WebGL</span><p>Activa la aceleración gráfica de tu navegador para explorar el vehículo.</p></div> }
@@ -41,6 +42,9 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
   private m4Requested=false;
   private assembled?:AssembledCar;
   private assembledKey='';
+  private readonly cabinLook=new CabinLook();
+  private lookPointer?:{id:number;x:number;y:number};
+  private lookMotionUntil=0;
   @ViewChild('stage') stage!: ElementRef<HTMLDivElement>;
   @Input() paint = '#2868b2';
   @Input() interior = '#252827';
@@ -137,6 +141,11 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
       this.controls.minDistance=4; this.controls.maxDistance=12; this.controls.maxPolarAngle=Math.PI/2-.02;
       this.controls.addEventListener('start', () => {this.movingCamera=false;this.requestRender();});
       this.controls.addEventListener('change',this.requestRender);
+      this.renderer.domElement.addEventListener('pointerdown',this.beginInteriorLook);
+      this.renderer.domElement.addEventListener('pointermove',this.dragInteriorLook);
+      this.renderer.domElement.addEventListener('pointerup',this.endInteriorLook);
+      this.renderer.domElement.addEventListener('pointercancel',this.endInteriorLook);
+      this.renderer.domElement.addEventListener('lostpointercapture',this.endInteriorLook);
       this.observer=new ResizeObserver(()=>this.resize()); this.observer.observe(this.stage.nativeElement); this.resize();
       this.visibilityObserver=new IntersectionObserver(entries=>{
         this.inViewport=entries[0].isIntersecting;this.visibilityChanged();
@@ -188,20 +197,56 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
   }
   private moveCamera() {
     const inside=this.view==='interior';
+    this.releaseInteriorLook();this.cabinLook.reset();this.lookMotionUntil=0;
     this.targetPosition.set(...(inside?(this.model==='e46'?[.10,1.12,-.36]:this.model==='m2'?[-.22,1.08,-.38]:this.model==='e36'?[.02,1.04,-.36]:this.model==='e92'?[.02,1.06,-.38]:[-.30,1.12,-.38]):this.exploded?[7.8,4.2,8.0]:this.narrowViewport?[5.8,2.3,6.0]:[5.2,2.1,5.4]) as [number,number,number]);
     this.targetLook.set(...(inside?(this.model==='e46'?[1,.72,-.12]:this.model==='m2'?[.8,.88,-.18]:this.model==='e36'?[.95,.81,-.12]:this.model==='e92'?[1,.83,-.12]:[.68,.85,-.10]):[0,this.exploded?1:.65,0]) as [number,number,number]);
-    this.camera.fov=inside?68:30;this.camera.updateProjectionMatrix();
-    if(this.controls) { this.controls.minDistance=inside?.05:4; this.controls.maxDistance=inside?2.5:12; this.controls.maxPolarAngle=inside?Math.PI:Math.PI/2-.02; this.controls.enableRotate=!inside; }
+    this.camera.fov=inside?CABIN_FIELD_OF_VIEW:30;this.camera.updateProjectionMatrix();
+    if(this.controls) { this.controls.enabled=!inside;this.controls.minDistance=inside?.05:4; this.controls.maxDistance=inside?2.5:12; this.controls.maxPolarAngle=inside?Math.PI:Math.PI/2-.02; this.controls.enableRotate=!inside; }
     this.movingCamera=true;
   }
   keyboard(e: KeyboardEvent) {
-    if(!this.controls || this.view==='interior') return;
+    if(!this.controls || e.ctrlKey || e.metaKey || e.altKey)return;
+    if(this.view==='interior') {
+      if(e.key==='ArrowLeft')this.cabinLook.rotate(.12,0);
+      else if(e.key==='ArrowRight')this.cabinLook.rotate(-.12,0);
+      else if(e.key==='ArrowUp')this.cabinLook.rotate(0,-.1);
+      else if(e.key==='ArrowDown')this.cabinLook.rotate(0,.1);
+      else if(e.key==='+' || e.key==='=')this.camera.fov=Math.max(60,this.camera.fov-3);
+      else if(e.key==='-')this.camera.fov=Math.min(95,this.camera.fov+3);
+      else if(e.key==='Home'){this.cabinLook.reset();this.camera.fov=CABIN_FIELD_OF_VIEW;}
+      else return;
+      e.preventDefault();this.camera.updateProjectionMatrix();this.orientInterior();return;
+    }
     const offset=this.camera.position.clone().sub(this.controls.target);
     if(e.key==='ArrowLeft' || e.key==='ArrowRight') offset.applyAxisAngle(new T.Vector3(0,1,0), e.key==='ArrowLeft'?.16:-.16);
     else if(e.key==='+'||e.key==='=') offset.multiplyScalar(.9);
     else if(e.key==='-') offset.multiplyScalar(1.1); else return;
     e.preventDefault(); offset.clampLength(4,12); this.camera.position.copy(this.controls.target).add(offset); this.movingCamera=false;
     this.requestRender();
+  }
+  private orientInterior() {
+    if(!this.controls)return;
+    this.movingCamera=false;this.camera.position.copy(this.targetPosition);
+    this.cabinLook.target(this.targetPosition,this.targetLook,this.controls.target);
+    this.camera.lookAt(this.controls.target);this.lookMotionUntil=performance.now()+120;this.requestRender();
+  }
+  private beginInteriorLook=(event:PointerEvent)=>{
+    if(this.view!=='interior' || event.button!==0 || this.lookPointer)return;
+    event.preventDefault();this.stage.nativeElement.focus({preventScroll:true});
+    this.lookPointer={id:event.pointerId,x:event.clientX,y:event.clientY};
+    this.renderer?.domElement.setPointerCapture(event.pointerId);this.orientInterior();
+  };
+  private dragInteriorLook=(event:PointerEvent)=>{
+    const pointer=this.lookPointer;if(!pointer || pointer.id!==event.pointerId || this.view!=='interior')return;
+    this.cabinLook.rotate(-(event.clientX-pointer.x)*.004,(event.clientY-pointer.y)*.003);
+    pointer.x=event.clientX;pointer.y=event.clientY;this.orientInterior();
+  };
+  private endInteriorLook=(event:PointerEvent)=>{
+    if(this.lookPointer?.id===event.pointerId){this.releaseInteriorLook();this.requestRender();}
+  };
+  private releaseInteriorLook() {
+    const pointer=this.lookPointer;this.lookPointer=undefined;
+    if(pointer && this.renderer?.domElement.hasPointerCapture(pointer.id))this.renderer.domElement.releasePointerCapture(pointer.id);
   }
   private part(kind: string, offset: T.Vector3) { const group=new T.Group(); this.car.add(group); this.parts.push({group,origin:group.position.clone(),offset,kind}); return group; }
   private box(parent:T.Group, size:number[], pos:number[], mat:T.Material, radius=.035) {
@@ -507,9 +552,11 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
     }
     const autoRotate=!!this.controls?.autoRotate;
     if(this.controls)this.controls.autoRotate=autoRotate && !this.movingCamera;
-    const controlsChanged=this.controls?.update(dt)??false;
+    let controlsChanged=false;
+    if(this.view==='interior' && this.controls)this.camera.lookAt(this.controls.target);
+    else controlsChanged=this.controls?.update(dt)??false;
     if(this.controls)this.controls.autoRotate=autoRotate;
-    const continuous=geometryMoving || this.movingCamera || controlsChanged || autoRotate;
+    const continuous=geometryMoving || this.movingCamera || controlsChanged || autoRotate || !!this.lookPointer || time<this.lookMotionUntil;
     if(continuous && this.quality.beginMotion())this.applyResolution();
     if(continuous && !this.modelLoading() && this.quality.observe(interval))this.applyResolution();
     if(!continuous && this.quality.ratio!==this.quality.maximum){this.quality.restore();this.applyResolution();}
@@ -535,6 +582,10 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
   };
   ngOnDestroy() {
     this.disposed=true;
+    this.releaseInteriorLook();
+    const canvas=this.renderer?.domElement;
+    canvas?.removeEventListener('pointerdown',this.beginInteriorLook);canvas?.removeEventListener('pointermove',this.dragInteriorLook);
+    canvas?.removeEventListener('pointerup',this.endInteriorLook);canvas?.removeEventListener('pointercancel',this.endInteriorLook);canvas?.removeEventListener('lostpointercapture',this.endInteriorLook);
     cancelAnimationFrame(this.frame); this.observer?.disconnect();this.visibilityObserver?.disconnect();
     document.removeEventListener('visibilitychange',this.visibilityChanged);this.controls?.removeEventListener('change',this.requestRender);this.controls?.dispose();
     if(this.assembled){this.scene.remove(this.assembled.group);this.assembled.dispose();}

@@ -25,5 +25,11 @@ export const DEMO_CATALOG: Catalog = {
     { id: 'silver', name: 'Plata Titanio', hex: '#bfc4cb', price: 1100 }
   ],
   wheels: [ { id: 'sport', name: 'M · Acabado Plata', price: 0 }, { id: 'forged', name: 'M · Acabado Jet Black', price: 2400 } ],
-  interiors: [ { id: 'black', name: 'Merino · Negro', hex: '#252827', price: 0 }, { id: 'cognac', name: 'Merino · Tartufo', hex: '#9a5730', price: 1800 }, { id: 'ivory', name: 'Merino · Silverstone', hex: '#c9c5b5', price: 2200 } ]
+  interiors: [
+    { id: 'black', name: 'Merino · Negro', hex: '#252827', price: 0 },
+    { id: 'cognac', name: 'Merino · Tartufo', hex: '#9a5730', price: 1800 },
+    { id: 'ivory', name: 'Merino · Silverstone', hex: '#c9c5b5', price: 2200 },
+    { id: 'burgundy', name: 'Merino · Burdeos', hex: '#8b3046', price: 2200 },
+    { id: 'navy', name: 'Merino · Azul Noche', hex: '#315a82', price: 2200 }
+  ]
 };

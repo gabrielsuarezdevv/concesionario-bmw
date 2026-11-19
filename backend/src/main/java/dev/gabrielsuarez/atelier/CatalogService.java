@@ -24,7 +24,8 @@ public class CatalogService {
             new Option("iceblue", "Azul Hielo", 1100, "#8bbbd2"), new Option("midnight", "Azul Medianoche", 1900, "#182f59"),
             new Option("silver", "Plata Titanio", 1100, "#bfc4cb")),
         List.of(new Option("sport", "M · Acabado Plata", 0, null), new Option("forged", "M · Acabado Jet Black", 2400, null)),
-        List.of(new Option("black", "Merino · Negro", 0, "#252827"), new Option("cognac", "Merino · Tartufo", 1800, "#9a5730"), new Option("ivory", "Merino · Silverstone", 2200, "#c9c5b5")));
+        List.of(new Option("black", "Merino · Negro", 0, "#252827"), new Option("cognac", "Merino · Tartufo", 1800, "#9a5730"), new Option("ivory", "Merino · Silverstone", 2200, "#c9c5b5"),
+            new Option("burgundy", "Merino · Burdeos", 2200, "#8b3046"), new Option("navy", "Merino · Azul Noche", 2200, "#315a82")));
     public Catalog getCatalog() { return catalog; }
     public Quote quote(ConfigurationRequest request) {
         Car model = catalog.models().stream().filter(m -> m.id().equals(request.model())).findFirst().orElseThrow(CatalogService::invalid);

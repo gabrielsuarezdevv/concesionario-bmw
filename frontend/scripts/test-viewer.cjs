@@ -22,6 +22,7 @@ const { batchCarParts }=loadSource('batch-car-parts.ts');
 const { AssembledCar }=loadSource('assembled-car.ts');
 const { ViewerQuality }=loadSource('viewer-quality.ts');
 const { ViewerFrameClock }=loadSource('viewer-frame-clock.ts');
+const { CabinLook, CABIN_FIELD_OF_VIEW }=loadSource('cabin-look.ts');
 function part(material, x=0, displacement=1) {
   const geometry=new T.BufferGeometry().setAttribute('position',new T.Float32BufferAttribute([x,0,0,x+1,0,0,x,1,0],3));
   const mesh=new T.Mesh(geometry,material);mesh.castShadow=true;mesh.layers.enable(2);
@@ -87,4 +88,18 @@ test('frame pacing caps high refresh displays at 60 FPS without duplicate bounda
     assert.equal(frames,Math.min(refresh,60)*2+1,`${refresh} Hz`);
     clock.reset();assert.equal(clock.take(100000),true);assert.equal(clock.take(100001),false);
   }
+});
+test('cabin look turns in place without changing the driver anchor or the default direction',()=>{
+  const look=new CabinLook(),anchor=new T.Vector3(.02,1.04,-.36),forward=anchor.clone().add(new T.Vector3(1,0,0)),target=new T.Vector3();
+  const originalAnchor=anchor.clone(),originalForward=forward.clone();
+  look.rotate(Math.PI/2,0);look.target(anchor,forward,target);
+  assert.ok(Math.abs(target.distanceTo(anchor)-1)<1e-9);assert.ok(target.clone().sub(anchor).distanceTo(new T.Vector3(0,0,-1))<1e-9);
+  assert.ok(anchor.equals(originalAnchor));assert.ok(forward.equals(originalForward));
+  look.reset();look.target(anchor,forward,target);assert.ok(target.clone().sub(anchor).distanceTo(new T.Vector3(1,0,0))<1e-9);
+  assert.equal(CABIN_FIELD_OF_VIEW,82);
+});
+test('cabin look bounds vertical rotation and keeps the horizon upright at extreme input',()=>{
+  const look=new CabinLook(),anchor=new T.Vector3(),forward=new T.Vector3(1,0,0),target=new T.Vector3();
+  look.rotate(500,1000);look.target(anchor,forward,target);assert.ok(target.y<0 && target.y>-.99);assert.ok(Math.abs(target.length()-1)<1e-9);
+  look.rotate(0,-2000);look.target(anchor,forward,target);assert.ok(target.y>0 && target.y<.99);assert.ok(Math.abs(target.length()-1)<1e-9);
 });
