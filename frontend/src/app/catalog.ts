@@ -10,7 +10,20 @@ export const DEMO_CATALOG: Catalog = {
     { id: 'e92', name: 'M3 E92', subtitle: 'El pulso de otra generación.', price: 58000, power: '420', acceleration: '4,8', drive: 'Trasera' },
     { id: 'e36', name: 'E36 Street', subtitle: 'Un clásico con carácter propio.', price: 28000, power: 'N/D', acceleration: 'N/D', drive: 'Trasera' }
   ],
-  paints: [ { id: 'blue', name: 'Portimao Blue', hex: '#2868b2', price: 0 }, { id: 'grey', name: 'Brooklyn Grey', hex: '#a2a8a6', price: 1100 }, { id: 'black', name: 'Sapphire Black', hex: '#202326', price: 1100 }, { id: 'green', name: 'Isle of Man Green', hex: '#276b5c', price: 1900 }, { id: 'white', name: 'Alpine White', hex: '#e8e8de', price: 0 } ],
+  paints: [
+    { id: 'blue', name: 'Portimao Blue', hex: '#2868b2', price: 0 },
+    { id: 'grey', name: 'Brooklyn Grey', hex: '#a2a8a6', price: 1100 },
+    { id: 'black', name: 'Sapphire Black', hex: '#202326', price: 1100 },
+    { id: 'green', name: 'Isle of Man Green', hex: '#276b5c', price: 1900 },
+    { id: 'white', name: 'Alpine White', hex: '#e8e8de', price: 0 },
+    { id: 'red', name: 'Rojo Rubí', hex: '#b51f32', price: 1100 },
+    { id: 'orange', name: 'Naranja Cobre', hex: '#d26628', price: 1100 },
+    { id: 'yellow', name: 'Amarillo Solar', hex: '#e0bd35', price: 1100 },
+    { id: 'purple', name: 'Violeta Amatista', hex: '#684091', price: 1100 },
+    { id: 'iceblue', name: 'Azul Hielo', hex: '#8bbbd2', price: 1100 },
+    { id: 'midnight', name: 'Azul Medianoche', hex: '#182f59', price: 1100 },
+    { id: 'silver', name: 'Plata Titanio', hex: '#bfc4cb', price: 1100 }
+  ],
   wheels: [ { id: 'sport', name: 'M · Acabado Plata', price: 0 }, { id: 'forged', name: 'M · Acabado Jet Black', price: 2400 } ],
   interiors: [ { id: 'black', name: 'Merino · Negro', hex: '#252827', price: 0 }, { id: 'cognac', name: 'Merino · Tartufo', hex: '#9a5730', price: 1800 }, { id: 'ivory', name: 'Merino · Silverstone', hex: '#c9c5b5', price: 2200 } ]
 };

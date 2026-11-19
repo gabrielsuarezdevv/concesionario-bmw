@@ -114,4 +114,9 @@ export class AppComponent implements OnDestroy {
     const url=URL.createObjectURL(blob), link=document.createElement('a');link.href=url;link.download='mi-bmw-configuracion.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   }
   optionPrice(option:Option) { return option.price===0?'Incluido':'+ '+new Intl.NumberFormat('es-ES',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(option.price); }
+  swatchInk(hex='#000000') {
+    const channels=[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16)/255)
+      .map(value=>value<=.04045?value/12.92:((value+.055)/1.055)**2.4);
+    return channels[0]*.2126+channels[1]*.7152+channels[2]*.0722>.179?'#15191e':'#ffffff';
+  }
 }
