@@ -1,18 +1,27 @@
-import { Component, ElementRef, ViewChild, computed, inject, signal } from '@angular/core';
+import { Component, ElementRef, OnDestroy, ViewChild, computed, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { CurrencyPipe } from '@angular/common';
 import { timeout } from 'rxjs';
+import { toDataURL } from 'qrcode';
+import { CheckoutView, orderEmailMessage } from './checkout';
+import { OrderCheckoutComponent } from './order-checkout.component';
 import { CarViewerComponent } from './car-viewer.component';
 import { Catalog, DEMO_CATALOG, Option } from './catalog';
 
-@Component({ selector: 'app-root', standalone: true, imports: [CarViewerComponent, CurrencyPipe], templateUrl: './app.component.html' })
-export class AppComponent {
+@Component({ selector: 'app-root', standalone: true, imports: [CarViewerComponent, CurrencyPipe, OrderCheckoutComponent], templateUrl: './app.component.html' })
+export class AppComponent implements OnDestroy {
+  readonly checkoutToken = new URLSearchParams(location.search).has('checkout') ? new URLSearchParams(location.search).get('checkout')! : null;
+  checkout=signal<CheckoutView|null>(null); qrImage=signal(''); checkoutLink=signal(''); buying=signal(false); purchaseError=signal('');
+  readonly emailMessage=orderEmailMessage;
+  private checkoutPoll?:ReturnType<typeof setTimeout>;
+  private destroyed=false;
+  private checkoutRequestId=0;
   @ViewChild('summary') summary!: ElementRef<HTMLDialogElement>;
   private http=inject(HttpClient);
   catalog=signal<Catalog>(DEMO_CATALOG);
   model=signal('m4'); paint=signal('blue'); wheels=signal('sport'); interior=signal('black');
   activePart=signal('paint'); view=signal('exterior'); exploded=signal(false); autoRotate=signal(false); resetKey=signal(0);
-  apiOnline=signal(false); saving=signal(false); toast=signal(''); saved=signal(false); help=signal(false);
+  apiOnline=signal(false); toast=signal(''); saved=signal(false); help=signal(false);
   private toastTimer?: ReturnType<typeof setTimeout>;
   car=computed(()=>this.catalog().models.find(m=>m.id===this.model())!);
   modelWatermark=computed(()=>({m4:'THE M4',m2:'THE M2',e46:'THE E46',e92:'THE E92',e36:'THE E36'} as Record<string,string>)[this.model()]);
@@ -25,6 +34,7 @@ export class AppComponent {
   total=computed(()=>this.car().price+this.selectedPaint().price+this.selectedWheels().price+this.selectedInterior().price);
   partTitle=computed(()=>({paint:'Carrocería y pintura',wheels:'Llantas y frenos',interior:'Habitáculo y tapicería'}[this.activePart()]));
   constructor() {
+    if(this.checkoutToken!==null)return;
     const query=new URLSearchParams(location.search);
     const shared=query.has('model');
     let selection: Record<string,string>={};
@@ -59,17 +69,40 @@ export class AppComponent {
     const behavior=window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth';
     if(section)document.getElementById(section)?.scrollIntoView({behavior});else window.scrollTo({top:0,behavior});
   }
-  openSummary() { this.summary.nativeElement.showModal(); }
-  selection() { return {model:this.model(),paint:this.paint(),wheels:this.wheels(),interior:this.interior()}; }
-  notify(text:string) { clearTimeout(this.toastTimer);this.toast.set(text);this.toastTimer=setTimeout(()=>this.toast.set(''),6500); }
-  save() {
-    if(this.saving())return; this.saving.set(true);const selection=this.selection();
-    const unchanged=()=>JSON.stringify(selection)===JSON.stringify(this.selection());
-    this.http.post<{id:string;total:number}>('/api/configurations',selection).pipe(timeout(6000)).subscribe({
-      next:()=>{this.apiOnline.set(true);this.persistLocal(selection);this.saved.set(unchanged());this.saving.set(false);this.notify('Tu configuración se ha guardado en el servidor.');},
-      error:()=>{this.apiOnline.set(false);const stored=this.persistLocal(selection);this.saved.set(stored&&unchanged());this.saving.set(false);this.notify(stored?'Servidor no disponible. Configuración guardada solo en este navegador.':'No se ha podido guardar. Puedes descargar tu configuración.');}
+  openSummary() {
+    ++this.checkoutRequestId;this.buying.set(false);clearTimeout(this.checkoutPoll);this.checkout.set(null);this.qrImage.set('');this.checkoutLink.set('');this.purchaseError.set('');
+    this.summary.nativeElement.showModal();
+  }
+  closeSummary() { ++this.checkoutRequestId;this.buying.set(false);clearTimeout(this.checkoutPoll);this.summary.nativeElement.close(); }
+  backToSummary() { clearTimeout(this.checkoutPoll);this.checkout.set(null);this.qrImage.set('');this.purchaseError.set(''); }
+  buy() {
+    if(this.buying())return;
+    this.buying.set(true);this.purchaseError.set('');const selection=this.selection();const requestId=++this.checkoutRequestId;
+    this.http.post<CheckoutView>('/api/checkouts',selection).pipe(timeout(10000)).subscribe({
+      next:async view=>{
+        if(this.destroyed || requestId!==this.checkoutRequestId)return;
+        const url=new URL(view.checkoutUrl,location.origin).toString();this.checkoutLink.set(url);this.checkout.set(view);
+        this.persistLocal(selection);this.saved.set(true);this.apiOnline.set(true);
+        try {const image=await toDataURL(url,{width:288,margin:4,errorCorrectionLevel:'M',color:{dark:'#111820',light:'#ffffff'}});if(this.destroyed || requestId!==this.checkoutRequestId)return;this.qrImage.set(image);}
+        catch {if(this.destroyed || requestId!==this.checkoutRequestId)return;this.purchaseError.set('No se ha podido generar el QR. Puedes continuar con el enlace.');}
+        this.buying.set(false);this.pollCheckout();
+      },
+      error:()=>{if(requestId!==this.checkoutRequestId)return;this.buying.set(false);this.purchaseError.set('No se ha podido iniciar la compra. Comprueba la conexión con el servidor e inténtalo de nuevo.');}
     });
   }
+  private pollCheckout() {
+    clearTimeout(this.checkoutPoll);const current=this.checkout();
+    if(this.destroyed || !current || !this.summary.nativeElement.open || current.state==='COMPLETED' && current.emailStatus!=='QUEUED')return;
+    this.checkoutPoll=setTimeout(()=>{
+      this.http.get<CheckoutView>('/api/checkouts/'+current.id).pipe(timeout(7000)).subscribe({
+        next:view=>{if(this.destroyed || this.checkout()?.id!==current.id)return;this.checkout.set(view);this.pollCheckout();},
+        error:response=>{if(response.status===410){this.purchaseError.set('El QR ha caducado. Vuelve al resumen para generar uno nuevo.');return;}this.pollCheckout();}
+      });
+    },3000);
+  }
+  ngOnDestroy() { this.destroyed=true;clearTimeout(this.checkoutPoll);clearTimeout(this.toastTimer); }
+  selection() { return {model:this.model(),paint:this.paint(),wheels:this.wheels(),interior:this.interior()}; }
+  notify(text:string) { clearTimeout(this.toastTimer);this.toast.set(text);this.toastTimer=setTimeout(()=>this.toast.set(''),6500); }
   private persistLocal(selection:Record<string,string>):boolean { try {localStorage.setItem('atelier.configuration',JSON.stringify(selection));return true;}catch{return false;} }
   async share() {
     const url=new URL(location.href);url.search=new URLSearchParams(this.selection()).toString();url.hash='configurador';

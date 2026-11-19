@@ -32,8 +32,8 @@ Abre http://127.0.0.1:4200. Angular reenvía `/api` al servidor en el puerto 808
 - Despiece animado por grupos visuales: carrocería, acristalamiento, habitáculo y cuatro ruedas. Se activa manualmente desde sus controles; cambiar pintura, llantas o tapicería conserva la vista elegida.
 - Cinco pinturas, dos acabados de llantas y tres colores de tapicería. Los cambios son de materiales; no sustituyen geometría por piezas OEM.
 - Catálogo de cinco modelos: M4 Competition, 330i E46, M2 G87, M3 E92 y E36 Street. i4 retirado del selector y de los presupuestos del servidor. Las configuraciones antiguas con modelos retirados vuelven al M4 al abrir la web. Las fichas, precios y opciones son de demostración; los acabados no representan un catálogo de fábrica del E46.
-- Resumen, guardado en Spring Boot/H2, restauración local, enlaces de configuración y descarga JSON.
-- Si el servidor no está disponible, la interfaz lo indica y permite guardar exclusivamente en el navegador. El presupuesto del servidor nunca acepta un total enviado por el cliente.
+- Resumen con botón Comprar, QR para completar el pedido desde el móvil, restauración local, enlaces de configuración y descarga JSON.
+- El presupuesto y el pedido se validan en Spring Boot. Si el servidor no está disponible se puede compartir o descargar la selección, pero no confirmar una compra.
 - Navegación por teclado, diálogos nativos, avisos accesibles y respeto por movimiento reducido.
 
 ## Validar
@@ -41,6 +41,7 @@ Abre http://127.0.0.1:4200. Angular reenvía `/api` al servidor en el puerto 808
 ```powershell
 cd frontend
 npm run build
+npm run test:qr
 ```
 
 ```powershell
@@ -48,7 +49,7 @@ cd backend
 .\mvnw.cmd verify
 ```
 
-Las pruebas de integración verifican precios calculados en el servidor, opciones inválidas, validación de entradas y creación/recuperación de configuraciones. GitHub Actions compila Angular y ejecuta `verify` de Maven en cada PR y push a `main` o `feat/**`.
+Las 16 pruebas de integración verifican precios, opciones, mayoría de edad, caducidad, concurrencia, pedidos únicos y reintentos de email. El QR se decodifica con una biblioteca independiente. GitHub Actions compila Angular, verifica el QR y ejecuta `verify` de Maven en cada PR y push a `main` o `feat/**`.
 
 ## API
 
@@ -59,6 +60,9 @@ Las pruebas de integración verifican precios calculados en el servidor, opcione
 | POST | `/api/quotes` | Presupuesto validado y calculado |
 | POST | `/api/configurations` | Guarda y devuelve UUID y precio |
 | GET | `/api/configurations/{uuid}` | Recupera una configuración |
+| POST | `/api/checkouts` | Congela el coche, acabados y precio; genera un enlace de compra de 30 minutos |
+| GET | `/api/checkouts/{uuid}` | Configuración y estado del pedido, sin datos del comprador |
+| POST | `/api/checkouts/{uuid}/orders` | Valida los datos, registra el pedido y prepara su email |
 
 Ejemplo de entrada para ambos POST:
 
@@ -66,7 +70,40 @@ Ejemplo de entrada para ambos POST:
 {"model":"m4","paint":"green","wheels":"forged","interior":"cognac"}
 ```
 
-El resultado orientativo para este ejemplo es 130.600 EUR. Opciones desconocidas o incompletas devuelven 400; una configuración inexistente devuelve 404. Los registros H2 se guardan en `backend/data/` (ignorado por Git). No se recogen datos personales. Los UUID permiten recuperar configuraciones por enlace conocido; no hay cuentas ni listado público de registros.
+El resultado orientativo para este ejemplo es 130.600 EUR. Opciones desconocidas o incompletas devuelven 400; una configuración inexistente devuelve 404. Los registros H2 se guardan en `backend/data/` (ignorado por Git). Los UUID permiten recuperar configuraciones por enlace conocido; no hay cuentas ni listado público de registros.
+
+## Compra mediante QR y confirmación por email
+
+«Ver mi configuración» → «Comprar» genera un QR que abre `/?checkout=<uuid>`. El formulario pide nombre completo, edad y correo. Se exigen 18 años cumplidos y una edad entera, tanto en Angular como en Spring Boot. La edad se declara en el formulario; no se verifica un documento de identidad. No hay pasarela ni cobro.
+
+El servidor conserva el coche y sus acabados al crear el QR; calcula el total sin confiar en importes del navegador. El enlace caduca a los 30 minutos. Cada QR admite un solo pedido: repetir la misma solicitud devuelve su referencia, incluso con envíos simultáneos. Un comprador distinto recibe 409; un enlace caducado, 410.
+
+El pedido guarda nombre, edad y correo en la base de datos local. El QR, las respuestas públicas y los logs de envío no contienen estos datos. El email incluye nombre, referencia, coche, acabados e importe; no incluye la edad. Un fallo SMTP conserva el pedido y reintenta hasta cinco veces. La pantalla distingue correo pendiente, enviado, preparado en local y fallo de entrega. «Enviado» significa aceptado por el servidor SMTP, no garantiza que llegue a la bandeja de entrada.
+
+Por defecto `ORDER_MAIL_MODE=preview`: se genera un mensaje `.eml` en `backend/data/mail-preview/`, sin enviar correo real. La interfaz indica este modo. Los mensajes y la base de datos están ignorados por Git y no se sirven como archivos web.
+
+### Servicio gratuito: Brevo
+
+La conexión está preparada para **Brevo Free**, cuyo plan ofrece actualmente 300 envíos diarios, incluidos correos transaccionales ([plan oficial](https://help.brevo.com/hc/en-us/articles/208589409-About-Brevo-s-pricing-plans)). Hace falta una cuenta propia, un remitente verificado y las credenciales de la pestaña SMTP de Brevo. La contraseña es una **clave SMTP**, no una API key ni la contraseña de la cuenta ([configuración oficial](https://help.brevo.com/hc/en-us/articles/7924908994450-Send-transactional-emails-using-Brevo-SMTP)).
+
+Define `ORDER_MAIL_FROM` con el remitente verificado, `SMTP_USERNAME` con el login SMTP y `SMTP_PASSWORD` con la clave SMTP como variables de entorno del proceso. Arranca desde `backend` con:
+
+```powershell
+java -jar target/bmw-atelier-1.0.0.jar --server.address=127.0.0.1 --spring.profiles.active=brevo
+```
+
+El perfil `brevo` activa SMTP en `smtp-relay.brevo.com:587`, con autenticación y STARTTLS obligatorio. No se incluyen credenciales. Para Docker, copia `.env.example` a `.env`, completa los valores y cambia `ORDER_MAIL_MODE=smtp`; Compose los pasa al contenedor. Java/Maven no cargan `.env` automáticamente. Mantén las claves fuera del repositorio y del frontend.
+
+### Escanear desde el móvil en la red local
+
+El QR necesita una URL accesible desde el teléfono: `localhost` en el móvil apunta al propio teléfono. Con ambos dispositivos en la misma red, compila Angular y sirve esa compilación mediante el puente incluido, indicando la IPv4 privada del PC:
+
+```powershell
+npm --prefix frontend run build
+node scripts/checkout-preview.cjs --host <IP-privada-del-PC>
+```
+
+Arranca el backend en `127.0.0.1:8080` con `CHECKOUT_PUBLIC_URL=http://<IP-privada-del-PC>:4300`, o abre directamente la web en esa dirección y deja `CHECKOUT_PUBLIC_URL` vacío. El puente sirve únicamente la compilación web y su API, en la interfaz indicada; no expone la carpeta de datos, no modifica el firewall y se detiene con Ctrl+C. No uses la interfaz de una VPN. Una red con aislamiento entre dispositivos puede impedir el acceso. Para publicar la aplicación, usa su origen HTTPS como `CHECKOUT_PUBLIC_URL`.
 
 ## Ejecutar con Docker
 
