@@ -23,6 +23,8 @@ const { AssembledCar }=loadSource('assembled-car.ts');
 const { ViewerQuality }=loadSource('viewer-quality.ts');
 const { ViewerFrameClock }=loadSource('viewer-frame-clock.ts');
 const { CabinLook, CABIN_FIELD_OF_VIEW }=loadSource('cabin-look.ts');
+const { addM4UpholsteryMask }=loadSource('m4-upholstery.ts');
+const { CabinMaterials }=loadSource('cabin-materials.ts');
 function part(material, x=0, displacement=1) {
   const geometry=new T.BufferGeometry().setAttribute('position',new T.Float32BufferAttribute([x,0,0,x+1,0,0,x,1,0],3));
   const mesh=new T.Mesh(geometry,material);mesh.castShadow=true;mesh.layers.enable(2);
@@ -102,4 +104,43 @@ test('cabin look bounds vertical rotation and keeps the horizon upright at extre
   const look=new CabinLook(),anchor=new T.Vector3(),forward=new T.Vector3(1,0,0),target=new T.Vector3();
   look.rotate(500,1000);look.target(anchor,forward,target);assert.ok(target.y<0 && target.y>-.99);assert.ok(Math.abs(target.length()-1)<1e-9);
   look.rotate(0,-2000);look.target(anchor,forward,target);assert.ok(target.y>0 && target.y<.99);assert.ok(Math.abs(target.length()-1)<1e-9);
+});
+test('M4 seat cushions and headrests are tinted across the old spatial clipping planes',()=>{
+  for(const positions of [
+    [0,.55,.12,.32,.55,.12,0,.55,.5],
+    [-.44,1.04,.3,-.44,1.29,.3,-.14,1.29,.6],
+    [-1.3,.65,-.65,-.6,.65,.65,-1.3,1.15,0]
+  ]) {
+    const geometry=new T.BufferGeometry().setAttribute('position',new T.Float32BufferAttribute(positions,3));
+    const original=Array.from(geometry.getAttribute('position').array);
+    addM4UpholsteryMask(geometry,'Meshespillars1Mtl');
+    const mask=geometry.getAttribute('cabinUpholsteryMask');
+    assert.ok([0,1,2].every(i=>mask.getX(i)===1));
+    assert.deepEqual(Array.from(geometry.getAttribute('position').array),original);
+  }
+});
+test('M4 shared trim material keeps steering, roof and floor components neutral',()=>{
+  const geometry=new T.BufferGeometry().setAttribute('position',new T.Float32BufferAttribute([
+    0,.55,.12,.32,.55,.12,0,.55,.5,
+    .3,.8,-.4,.35,.95,-.4,.3,.8,-.3,
+    -.5,1.4,-.5,.5,1.4,-.5,-.5,1.4,.5,
+    -.5,.2,-.5,.5,.2,-.5,-.5,.2,.5
+  ],3));
+  addM4UpholsteryMask(geometry,'Meshesinterior181Mtl');const mask=geometry.getAttribute('cabinUpholsteryMask');
+  for(let i=0;i<12;i++)assert.equal(mask.getX(i),i<3?1:0);
+});
+test('M4 dedicated seat inserts are fully tinted and exterior black trim stays neutral',()=>{
+  const positions=[-.2,.414,.3,.14,.47,.3,-.4,1.269,.48];
+  for(const [name,value] of [['Meshesinterior231Mtl',1],['Meshesblack161Mtl',0]]){
+    const geometry=new T.BufferGeometry().setAttribute('position',new T.Float32BufferAttribute(positions,3));
+    addM4UpholsteryMask(geometry,name);for(let i=0;i<3;i++)assert.equal(geometry.getAttribute('cabinUpholsteryMask').getX(i),value);
+  }
+});
+test('M4 normalized panel mask survives the indexed-to-flat leather UV conversion',()=>{
+  const geometry=new T.BufferGeometry().setAttribute('position',new T.Float32BufferAttribute([0,.55,.12,.32,.55,.12,.32,.55,.5,0,.55,.5],3));
+  geometry.setIndex([0,1,2,0,2,3]);geometry.computeVertexNormals();addM4UpholsteryMask(geometry,'Meshespillars1Mtl');
+  // The UV projection is CPU-only; skip the constructor's texture loading in this fixture.
+  const projected=Object.create(CabinMaterials.prototype).addDetailUVs(geometry);
+  const mask=projected.getAttribute('cabinUpholsteryMask');assert.equal(mask.count,6);assert.equal(mask.normalized,true);
+  for(let i=0;i<mask.count;i++)assert.equal(mask.getX(i),1);
 });

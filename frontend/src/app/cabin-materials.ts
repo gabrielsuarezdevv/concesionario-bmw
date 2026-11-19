@@ -31,24 +31,23 @@ export class CabinMaterials {
     material.onBeforeCompile = shader => {
       shader.uniforms['cabinUpholstery'] = this.upholstery;
       shader.uniforms['cabinTrim'] = { value: new T.Color(trimColor) };
-      shader.vertexShader = 'varying vec3 vCabinPosition;\n' + shader.vertexShader;
-      shader.vertexShader = shader.vertexShader.replace('#include <begin_vertex>',
-        '#include <begin_vertex>\nvCabinPosition = position;');
-      shader.fragmentShader = 'varying vec3 vCabinPosition;\nuniform vec3 cabinUpholstery;\nuniform vec3 cabinTrim;\n' + shader.fragmentShader;
+      if(!upholsteryOnly) {
+        shader.vertexShader='attribute float cabinUpholsteryMask;\nvarying float vCabinUpholsteryMask;\n'+shader.vertexShader;
+        shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>',
+          '#include <begin_vertex>\nvCabinUpholsteryMask = cabinUpholsteryMask;');
+        shader.fragmentShader='varying float vCabinUpholsteryMask;\n'+shader.fragmentShader;
+      }
+      shader.fragmentShader = 'uniform vec3 cabinUpholstery;\nuniform vec3 cabinTrim;\n' + shader.fragmentShader;
       shader.fragmentShader = shader.fragmentShader.replace('#include <color_fragment>', `
         #include <color_fragment>
-        // Upholstery, floor, wheel spokes and trim share source materials. Keep trim neutral.
-        bool onSeat = vCabinPosition.x < .18 && vCabinPosition.x > -1.72
-          && vCabinPosition.y > .43 && vCabinPosition.y < 1.23
-          && abs(vCabinPosition.z) > .16 && abs(vCabinPosition.z) < .66;
-        diffuseColor.rgb *= ${upholsteryOnly ? 'cabinUpholstery' : 'onSeat ? cabinUpholstery : cabinTrim'};
+        diffuseColor.rgb *= ${upholsteryOnly ? 'cabinUpholstery' : 'mix(cabinTrim, cabinUpholstery, vCabinUpholsteryMask)'};
       `);
       shader.fragmentShader = shader.fragmentShader.replace(
         '#include <roughnessmap_fragment>',
         'float roughnessFactor = mix(0.68, 0.92, texture2D(roughnessMap, vRoughnessMapUv).g);'
       );
     };
-    material.customProgramCacheKey = () => 'cabin-leather-v2-'+upholsteryOnly;
+    material.customProgramCacheKey = () => 'cabin-leather-panel-mask-v3-'+upholsteryOnly;
     return material;
   }
 

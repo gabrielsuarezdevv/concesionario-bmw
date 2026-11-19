@@ -15,6 +15,7 @@ import { ViewerQuality } from './viewer-quality';
 import { AssembledCar } from './assembled-car';
 import { ViewerFrameClock } from './viewer-frame-clock';
 import { CabinLook, CABIN_FIELD_OF_VIEW } from './cabin-look';
+import { addM4UpholsteryMask } from './m4-upholstery';
 
 type Part = { group: T.Group; origin: T.Vector3; offset: T.Vector3; kind: string };
 @Component({
@@ -384,6 +385,7 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
           kind='structure';offset.set(0,1.25,0);
         } else if(name.includes('interior18')||name.includes('interior23')||name.includes('pillars')||name.includes('black16')) {
           material=this.cabinMaterials!.leather(name.includes('interior18')?'#30343a':'#111418');
+          addM4UpholsteryMask(geometry,name);
           geometry=this.cabinMaterials!.addDetailUVs(geometry);
           if(name.includes('interior')){this.detailedSeats.push(material);kind='interior';offset.set(-.1,.7,0);}
         } else if(name.includes('interior7')) {
