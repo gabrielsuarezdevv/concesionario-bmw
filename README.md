@@ -94,6 +94,10 @@ java -jar target/bmw-atelier-1.0.0.jar --server.address=127.0.0.1 --spring.profi
 
 El perfil `brevo` activa SMTP en `smtp-relay.brevo.com:587`, con autenticación y STARTTLS obligatorio. No se incluyen credenciales. Para Docker, copia `.env.example` a `.env`, completa los valores y cambia `ORDER_MAIL_MODE=smtp`; Compose los pasa al contenedor. Java/Maven no cargan `.env` automáticamente. Mantén las claves fuera del repositorio y del frontend.
 
+En Windows puedes evitar introducir la clave en un comando o archivo de texto. Desde la raíz del proyecto, ejecuta `powershell -File .\scripts\configure-brevo.ps1`: pide el remitente verificado, el login SMTP y la clave con entrada oculta. Guarda la clave cifrada mediante DPAPI para tu usuario de Windows en `backend/data/brevo.credentials.xml`, ignorado por Git. El asistente solo guarda la configuración; no envía mensajes. No compartas este archivo ni captures la clave en pantalla.
+
+Después de detener el backend anterior, `powershell -File .\scripts\start-brevo.ps1` arranca el servidor con esas credenciales. Para el QR de la red local puedes añadir `-CheckoutPublicUrl http://<IP-privada-del-PC>:4300` y mantener el puente móvil iniciado. La clave se pasa al proceso Java mediante su entorno, nunca por argumentos de línea de comandos. Solo se podrá descifrar con el mismo usuario de Windows en este equipo.
+
 ### Escanear desde el móvil en la red local
 
 El QR necesita una URL accesible desde el teléfono: `localhost` en el móvil apunta al propio teléfono. Con ambos dispositivos en la misma red, compila Angular y sirve esa compilación mediante el puente incluido, indicando la IPv4 privada del PC:
