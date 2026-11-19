@@ -45,7 +45,11 @@ export class CabinRendering {
     this.occlusion.setSize(Math.round(width * ratio * .65), Math.round(height * ratio * .65));
   }
 
-  render(dt: number) { this.composer.render(dt); }
+  render(dt: number, moving = false) {
+    // Restore contact detail on the final frame; avoid the extra geometry and denoise passes during travel.
+    this.occlusion.enabled=!moving;
+    this.composer.render(dt);
+  }
 
   dispose() {
     this.beauty.dispose();

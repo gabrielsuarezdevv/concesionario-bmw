@@ -1,4 +1,5 @@
 import * as T from 'three';
+import { batchCarParts } from './batch-car-parts';
 
 type Part = { group: T.Group; origin: T.Vector3; offset: T.Vector3; kind: string };
 
@@ -85,6 +86,7 @@ export class M2Car {
       if (!glass) visual.layers.enable(2);
       part.group.add(visual);
     }
+    batchCarParts(this.group, this.parts);
     source.traverse(node => { if (node instanceof T.Mesh) {
       node.geometry.dispose();
       for (const material of Array.isArray(node.material) ? node.material : [node.material]) material.dispose();

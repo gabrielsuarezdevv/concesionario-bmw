@@ -42,6 +42,7 @@ Abre http://127.0.0.1:4200. Angular reenvía `/api` al servidor en el puerto 808
 cd frontend
 npm run build
 npm run test:qr
+npm run test:viewer
 ```
 
 ```powershell
@@ -50,6 +51,18 @@ cd backend
 ```
 
 Las 16 pruebas de integración verifican precios, opciones, mayoría de edad, caducidad, concurrencia, pedidos únicos y reintentos de email. El QR se decodifica con una biblioteca independiente. GitHub Actions compila Angular, verifica el QR y ejecuta `verify` de Maven en cada PR y push a `main` o `feat/**`.
+
+## Rendimiento del visor
+
+El visor dibuja bajo demanda: se detiene al quedar quieto, al salir de pantalla o al ocultar la pestaña. El giro automático, la inercia y las transiciones siguen animándose, con un máximo de 60 FPS y un reloj que mantiene ese límite en pantallas de 60 a 240 Hz. Solo se descarga y adapta cada modelo cuando se selecciona; los modelos ocultos no participan en la animación.
+
+Las geometrías opacas con el mismo material se agrupan respetando sus desplazamientos de despiece. Para el exterior ensamblado se utiliza una segunda representación que permite agrupar también entre piezas. Comparte los materiales y conserva todos los vértices y texturas; al activar el despiece o entrar en el habitáculo se muestran las piezas originales. Solo se conserva una representación ensamblada adicional a la vez. Las variantes de ruedas del E46 mantienen sus controles de visibilidad y las superficies transparentes conservan sus límites de ordenación.
+
+La resolución se limita a DPR 1,5 y aproximadamente 1,2 millones de píxeles, baja temporalmente durante el movimiento y se ajusta más si los fotogramas siguen siendo lentos. La resolución de reposo se recupera al detenerse. La refracción usa una captura reducida; la oclusión del habitáculo se restaura al finalizar el desplazamiento de cámara. No se simplifican las mallas ni se sustituyen los interiores.
+
+En desarrollo, añade `viewerStats=1` a la URL para mostrar FPS, llamadas de dibujo, resolución y un contador de fotogramas. El contador debe dejar de aumentar en reposo; la compilación de producción no muestra este diagnóstico. Las llamadas reflejan el último render de Three.js; los pases del compositor interior tienen sus propias estadísticas. En la prueba local del E36, el exterior pasó de 473 a 239 llamadas con la agrupación por movimiento y a 161 con la representación ensamblada. Son medidas de esa escena y cámara, no una garantía de FPS en otros equipos.
+
+`npm run test:viewer` comprueba conservación de geometría/materiales, despiece, variantes de ruedas, transparencia, liberación de los buffers adicionales, adaptación de resolución y cadencia en pantallas de 30 a 240 Hz. Para el giro WebGL también es necesaria la aceleración gráfica del navegador.
 
 ## API
 

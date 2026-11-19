@@ -1,4 +1,5 @@
 import * as T from 'three';
+import { batchCarParts } from './batch-car-parts';
 import { CabinMaterials } from './cabin-materials';
 import { e46Gauges, projectE46Artwork } from './e46-details';
 
@@ -114,6 +115,7 @@ export class E46Car {
       this.parts.push({ group: part, origin: new T.Vector3(), offset, kind });
       if (/rim_/.test(assembly)) this.wheelVariants.push({ group: part, finish: /rim_bbs_chr/.test(assembly) ? 'forged' : 'sport' });
     }
+    batchCarParts(this.group, this.parts, new Set(this.wheelVariants.map(variant => variant.group)));
     source.traverse(node => { if (node instanceof T.Mesh) {
       node.geometry.dispose();
       for (const material of Array.isArray(node.material) ? node.material : [node.material]) material.dispose();

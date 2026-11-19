@@ -6,7 +6,8 @@
     "start": "ng serve --host 127.0.0.1 --port 4200",
     "build": "ng build",
     "typecheck": "tsc --noEmit",
-    "test:qr": "node scripts/test-qr.cjs"
+    "test:qr": "node scripts/test-qr.cjs",
+    "test:viewer": "node --test scripts/test-viewer.cjs"
   },
   "dependencies": {
     "@angular/common": "^21.2.0",

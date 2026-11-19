@@ -6,10 +6,10 @@ export class CabinMaterials {
   private readonly roughness: T.Texture;
   private readonly upholstery = { value: new T.Color('#252827') };
 
-  constructor(anisotropy: number) {
+  constructor(anisotropy: number, invalidate: () => void = () => {}) {
     const loader = new T.TextureLoader();
-    this.normal = loader.load('/textures/leather-white-normal-1k.jpg');
-    this.roughness = loader.load('/textures/leather-white-roughness-1k.jpg');
+    this.normal = loader.load('/textures/leather-white-normal-1k.jpg', invalidate);
+    this.roughness = loader.load('/textures/leather-white-roughness-1k.jpg', invalidate);
     for (const texture of [this.normal, this.roughness]) {
       texture.wrapS = texture.wrapT = T.RepeatWrapping;
       texture.channel = 1;
