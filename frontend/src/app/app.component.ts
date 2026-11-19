@@ -15,6 +15,10 @@ export class AppComponent {
   apiOnline=signal(false); saving=signal(false); toast=signal(''); saved=signal(false); help=signal(false);
   private toastTimer?: ReturnType<typeof setTimeout>;
   car=computed(()=>this.catalog().models.find(m=>m.id===this.model())!);
+  modelWatermark=computed(()=>({m4:'THE M4',m2:'THE M2',e46:'THE E46',e92:'THE E92',e36:'THE E36'} as Record<string,string>)[this.model()]);
+  modelEdition=computed(()=>({m4:'M Performance',m2:'G87',e46:'E46 Berlina',e92:'E92 · Stance',e36:'E36 · Street'} as Record<string,string>)[this.model()]);
+  heritage=computed(()=>['e46','e36'].includes(this.model()));
+  priceNote=computed(()=>({e46:'Berlina E46 · Precio simulado',e92:'Preparación stance · Precio simulado',e36:'Preparación Street · Precio simulado'} as Record<string,string>)[this.model()]??'Precio orientativo · Configuración de demostración');
   selectedPaint=computed(()=>this.catalog().paints.find(p=>p.id===this.paint())!);
   selectedWheels=computed(()=>this.catalog().wheels.find(p=>p.id===this.wheels())!);
   selectedInterior=computed(()=>this.catalog().interiors.find(p=>p.id===this.interior())!);
