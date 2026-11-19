@@ -19,9 +19,9 @@ public class CatalogService {
             new Car("e36", "E36 Street", "Un clásico con carácter propio.", 28000, "N/D", "N/D", "Trasera")),
         List.of(new Option("blue", "Portimao Blue", 0, "#2868b2"), new Option("grey", "Brooklyn Grey", 1100, "#a2a8a6"),
             new Option("black", "Sapphire Black", 1100, "#202326"), new Option("green", "Isle of Man Green", 1900, "#276b5c"), new Option("white", "Alpine White", 0, "#e8e8de"),
-            new Option("red", "Rojo Rubí", 1100, "#b51f32"), new Option("orange", "Naranja Cobre", 1100, "#d26628"),
-            new Option("yellow", "Amarillo Solar", 1100, "#e0bd35"), new Option("purple", "Violeta Amatista", 1100, "#684091"),
-            new Option("iceblue", "Azul Hielo", 1100, "#8bbbd2"), new Option("midnight", "Azul Medianoche", 1100, "#182f59"),
+            new Option("red", "Rojo Rubí", 1900, "#b51f32"), new Option("orange", "Naranja Cobre", 1100, "#d26628"),
+            new Option("yellow", "Amarillo Solar", 1900, "#e0bd35"), new Option("purple", "Violeta Amatista", 1900, "#684091"),
+            new Option("iceblue", "Azul Hielo", 1100, "#8bbbd2"), new Option("midnight", "Azul Medianoche", 1900, "#182f59"),
             new Option("silver", "Plata Titanio", 1100, "#bfc4cb")),
         List.of(new Option("sport", "M · Acabado Plata", 0, null), new Option("forged", "M · Acabado Jet Black", 2400, null)),
         List.of(new Option("black", "Merino · Negro", 0, "#252827"), new Option("cognac", "Merino · Tartufo", 1800, "#9a5730"), new Option("ivory", "Merino · Silverstone", 2200, "#c9c5b5")));
