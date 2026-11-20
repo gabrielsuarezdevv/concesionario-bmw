@@ -1,36 +1,64 @@
 <section class="welcome" aria-labelledby="welcome-title">
   <div class="welcome-copy">
-    <p class="home-kicker">BIENVENIDO A BMW ATELIER</p>
-    <h1 id="welcome-title" tabindex="-1">Tu próxima historia<br>empieza <em>aquí.</em></h1>
-    <p class="welcome-intro">Hay coches que se conducen. Y otros que se sienten tuyos desde el primer momento. Encuentra el tuyo y dale tu carácter.</p>
-    <a class="home-button" href="#coleccion" (click)="visit.emit({section:'coleccion',event:$event})">Explorar el catálogo</a>
-    <p class="welcome-note">{{modelCount()}} modelos. Tu forma de vivir BMW.</p>
+    <p class="home-kicker"><span class="kicker-line" aria-hidden="true"></span> BIENVENIDO A BMW ATELIER</p>
+    <h1 id="welcome-title" tabindex="-1">Tu BMW.<br>A tu <em>manera.</em></h1>
+    <p class="welcome-intro">El carácter se reconoce. El tuyo, se diseña.<br>Encuentra tu BMW y empieza a hacerlo tuyo.</p>
+    <div class="welcome-actions">
+      <a class="home-button" href="#coleccion" (click)="visit.emit({section:'coleccion',event:$event})">Explorar el catálogo</a>
+      <a class="home-secondary" href="#experiencia" (click)="visit.emit({section:'experiencia',event:$event})">Vivir la experiencia <span aria-hidden="true">360°</span></a>
+    </div>
+    <div class="welcome-note"><span class="note-line" aria-hidden="true"></span><p>{{modelCount()}} formas de empezar.<br><b>Una sola forma de ser tú.</b></p></div>
   </div>
-  <figure class="welcome-car">
-    <span class="car-wordmark" aria-hidden="true">THE M2</span>
-    <div class="car-halo" aria-hidden="true"></div>
-    <img src="models/previews/m2.png" width="1000" height="540" fetchpriority="high" alt="BMW M2 G87 azul, visto de tres cuartos">
-    <figcaption><span>BMW M2 G87</span><span>Toda la esencia M.</span></figcaption>
-  </figure>
-  <div class="welcome-baseline"><span>EL PLACER DE HACERLO TUYO.</span><span>UN SHOWROOM SIN LÍMITES.</span></div>
+  <div class="welcome-showcase">
+    <span class="car-wordmark" aria-hidden="true">BMW M</span>
+    <div class="showcase-orbit" aria-hidden="true"><span></span></div>
+    <span class="showcase-label" aria-hidden="true">DISEÑADO PARA SENTIR.</span>
+    <figure class="welcome-car">
+      @for(car of [featured()]; track car.id) {
+        <img [src]="'models/previews/'+car.id+'.png'" width="1000" height="540" fetchpriority="high" [alt]="'BMW '+car.name+' azul, visto de tres cuartos'">
+      }
+      <figcaption aria-live="polite" aria-atomic="true"><span>BMW {{featured().name}}</span><span>{{featured().statement}}</span></figcaption>
+    </figure>
+    <div class="showcase-selector" role="group" aria-label="Modelos destacados">
+      @for(car of highlights; track car.id; let index=$index) {
+        <button [class.selected]="highlighted()===index" [attr.aria-pressed]="highlighted()===index" (click)="highlighted.set(index)">{{car.name}}</button>
+      }
+    </div>
+    <p class="showcase-character">{{featured().character}}</p>
+  </div>
+  <div class="welcome-baseline"><span>EL PLACER DE HACERLO TUYO.</span><span class="baseline-rule" aria-hidden="true"></span><span>EXPLORA SIN LÍMITES.</span></div>
 </section>
 
-<section class="home-journey" aria-label="Tu experiencia en BMW Atelier">
-  <article><span class="journey-icon" aria-hidden="true">◇</span><div><h2>Encuentra tu BMW.</h2><p>Clásicos con historia y siluetas que miran al futuro. Descubre nuestra colección.</p></div></article>
-  <article><span class="journey-icon" aria-hidden="true">◉</span><div><h2>Dale tu carácter.</h2><p>Combina pintura, llantas y tapicería hasta encontrar tu propia expresión.</p></div></article>
-  <article><span class="journey-icon orbit-icon" aria-hidden="true">360°</span><div><h2>Vívelo desde dentro.</h2><p>Gira a su alrededor, entra al habitáculo y explora su diseño pieza a pieza.</p></div></article>
+<section class="home-journey" aria-labelledby="journey-title">
+  <div class="journey-heading"><p class="home-kicker">DE LA PRIMERA MIRADA AL ÚLTIMO DETALLE.</p><h2 id="journey-title">No solo lo eliges.<br><span>Lo haces tuyo.</span></h2></div>
+  <div class="journey-features">
+    <article>
+      <div class="journey-symbol silhouette-symbol" aria-hidden="true"><svg viewBox="0 0 64 32" fill="none"><path d="m5 22 4-9 12-3 8-7h16l8 11 7 3v9H5v-4Z"/><path d="m23 11 8-6h12l5 8H15"/><circle cx="17" cy="25" r="5"/><circle cx="48" cy="25" r="5"/></svg></div>
+      <h3>Una silueta que va contigo.</h3><p>Clásicos con historia y nuevas expresiones del carácter BMW. Encuentra la tuya.</p>
+    </article>
+    <article>
+      <div class="journey-symbol palette-symbol" aria-hidden="true"><i></i><i></i><i></i></div>
+      <h3>Tu carácter, en cada acabado.</h3><p>Pintura, llantas y tapicería. Combina los detalles hasta reconocerte en ellos.</p>
+    </article>
+    <article>
+      <div class="journey-symbol orbit-symbol" aria-hidden="true"><span>360°</span></div>
+      <h3>Cambia tu punto de vista.</h3><p>Rodéalo, siéntate al volante y descubre el diseño que hay bajo la carrocería.</p>
+    </article>
+  </div>
 </section>
 
 <section class="home-collection" aria-labelledby="home-collection-title">
   <div class="collection-visual" aria-hidden="true">
     <span>EL CARÁCTER<br>NO TIENE ÉPOCA.</span>
+    <div class="collection-line"></div>
     <img class="classic-car" src="models/previews/e46.png" width="1000" height="540" alt="" loading="lazy">
     <img class="modern-car" src="models/previews/m4.png" width="1000" height="540" alt="" loading="lazy">
+    <small>DISTINTAS GENERACIONES. EL MISMO IMPULSO.</small>
   </div>
   <div class="collection-copy">
-    <p class="home-kicker">DISTINTAS GENERACIONES. UNA MISMA PASIÓN.</p>
-    <h2 id="home-collection-title">Elige la silueta.<br>Escribe el resto.</h2>
-    <p>Del carácter de un E46 a la presencia de un M4 Competition. Tu siguiente historia empieza con el BMW que va contigo.</p>
-    <a class="home-text-link" href="#coleccion" (click)="visit.emit({section:'coleccion',event:$event})">Descubrir los {{modelCount()}} modelos</a>
+    <p class="home-kicker">LA COLECCIÓN BMW</p>
+    <h2 id="home-collection-title">Algunas historias<br>merecen <em>conducirse.</em></h2>
+    <p>Del carácter de un E46 a la presencia de un M4 Competition. Elige la silueta que va contigo. El resto lo escribes tú.</p>
+    <a class="home-text-link" href="#coleccion" (click)="visit.emit({section:'coleccion',event:$event})">Descubrir los {{modelCount()}} modelos <span class="link-mark" aria-hidden="true">+</span></a>
   </div>
 </section>
