@@ -25,13 +25,13 @@ Abre http://127.0.0.1:4200. Angular reenvía `/api` al servidor en el puerto 808
 
 ## Experiencia disponible
 
-- BMW M4 Competition, BMW 330i E46, BMW M2 G87, BMW M3 E92 con archivos GLB independientes, rotación 360° con ratón, gestos o flechas; zoom con rueda o +/−. El E46 se descarga cuando se selecciona por primera vez (unos 35 MB para el coche completo).
+- BMW M4 Competition, BMW 330i E46, BMW M2 G87, BMW M3 E92, X6 xDrive40i, M5 E34, 1M Coupé y M4 F82 con archivos GLB independientes, rotación 360° con ratón, gestos o flechas; zoom con rueda o +/−. Los modelos se cargan al seleccionarlos.
 - Iluminación de estudio generada localmente, pintura con barniz y microtextura, cristales con transmisión física y sombras de contacto proyectadas desde la geometría. Se conservan las texturas originales de carbono, neumáticos y detalles de las ruedas. El realismo sigue limitado por la malla y las texturas del modelo de origen.
 - Cámara interior desde el puesto del conductor, con campo de visión de 82°. Arrastra con ratón o dedo para mirar alrededor sin desplazar la cámara fuera del asiento. También funcionan las cuatro flechas; + / − ajustan el ángulo entre 60° y 95°, e Inicio centra la mirada. La tapicería conserva su color al cambiar de dirección.
 - Habitáculo con vinilo no metálico, mapas de detalle de cuero CC0 de Poly Haven y oclusión ambiental de corto alcance, calculada solo en la vista interior. Los cristales no participan como superficies opacas en ese cálculo. En el M4, que comparte materiales entre asientos y molduras, la máscara de tapicería se calcula una vez al cargar a partir de paneles conectados. El tinte cubre cada panel completo, incluidos bordes y reposacabezas; las costuras de UV y normales no provocan cortes de color. No se modifica la geometría ni se añaden pasadas de renderizado.
 - Despiece animado por grupos visuales: carrocería, acristalamiento, habitáculo y cuatro ruedas. Se activa manualmente desde sus controles; cambiar pintura, llantas o tapicería conserva la vista elegida.
 - Doce pinturas, dos acabados de llantas y cinco colores de tapicería: Negro, Tartufo, Silverstone, Burdeos y Azul Noche. Los dos nuevos interiores tienen un suplemento de demostración de 2.200 €. Se añaden Rojo Rubí, Naranja Cobre, Amarillo Solar, Violeta Amatista, Azul Hielo, Azul Medianoche y Plata Titanio a la paleta exterior de demostración. Los cambios son de materiales; no sustituyen geometría por piezas OEM ni garantizan disponibilidad de fábrica.
-- Catálogo de cuatro modelos: M4 Competition, 330i E46, M2 G87 y M3 E92. i4 retirado del selector y de los presupuestos del servidor. Las configuraciones antiguas con modelos retirados vuelven al M4 al abrir la web. Las fichas, precios y opciones son de demostración; los acabados no representan un catálogo de fábrica del E46.
+- Catálogo de ocho modelos, con imágenes PNG transparentes generadas desde el mismo visor 3D. Las configuraciones antiguas con modelos retirados vuelven al M4 al abrir la web. Las fichas, precios y opciones son de demostración; los acabados no representan un catálogo de fábrica.
 - Resumen con botón Comprar, QR para completar el pedido desde el móvil, restauración local, enlaces de configuración y descarga JSON.
 - El presupuesto y el pedido se validan en Spring Boot. Si el servidor no está disponible se puede compartir o descargar la selección, pero no confirmar una compra.
 - Navegación por teclado, diálogos nativos, avisos accesibles y respeto por movimiento reducido.
@@ -175,3 +175,38 @@ La ficha utiliza como referencia el M3 Coupé manual de 2007 (420 CV / 4,8 s),
 [fuente BMW](https://www.press.bmwgroup.com/global/article/attachment/T0137039EN/208331).
 El precio base de 58.000 € es ficticio de demostración.
 [Atribución y cambios](frontend/public/models/ATTRIBUTION.md).
+
+## X6, M5 E34, 1M y M4 F82
+
+Se integran los cuatro archivos aportados por el usuario, con su propio exterior e interior.
+El X6, el E34 y el 1M se convierten de FBX a GLB mediante Blender, conservando texturas
+y geometría. El F82 usa el GLB incluido en su archivo original. La carga es bajo demanda;
+se mantiene la agrupación de geometría, el render en reposo y la calidad adaptativa.
+Los cambios de pintura o llantas no activan automáticamente el despiece.
+
+- X6 xDrive40i: Ddiaz Design, CC BY-NC-SA 4.0; adaptación y PNG bajo la misma licencia.
+- M5 E34: temich, CC BY-NC 4.0. Enlace de origen confirmado por el usuario.
+- 1M Coupé: Animase, Sketchfab Free Standard; origen indicado por el autor: Assetto Corsa.
+- M4 F82: Black Snow, CC BY 4.0.
+
+El X6 y el E34 se incluyen para esta demostración no comercial. El archivo 3D del 1M
+se conserva solo en el equipo y está excluido de Git, porque su licencia no permite
+redistribuirlo como un recurso independiente. El código de integración y su render PNG
+sí están incluidos. Los precios (85.000, 48.000, 62.000 y 65.000 €) son ficticios; potencia
+y aceleración muestran N/D para estas variantes artísticas. [Créditos y licencias](frontend/public/models/ATTRIBUTION.md).
+
+Para preparar tu propia copia licenciada del 1M después de clonar, extrae el ZIP original
+en `artifacts/import-1m` y ejecuta Blender desde la raíz del proyecto:
+
+```powershell
+& 'C:/ruta/a/blender.exe' --background --factory-startup --disable-autoexec --python scripts/convert-car-fbx.py -- --model 1m --input 'artifacts/import-1m/source/bmw_1m final.fbx' --textures 'artifacts/import-1m/textures' --output 'frontend/public/models/bmw-1m.glb'
+node scripts/attribute-car-assets.cjs
+```
+
+Para regenerar los PNG, abre el servidor Angular de desarrollo con `assetPreview=1`
+en la URL. El botón «Generar PNG transparente» produce una imagen de 1000×540 con canal
+alfa a partir del coche ensamblado, sin fondo, suelo, sombra del showroom ni rótulos.
+La herramienta solo aparece en desarrollo; el configurador público usa los PNG estáticos.
+Las pruebas del visor comprueban la transparencia de las ocho imágenes y que la adaptación
+de los nuevos coches mantiene su geometría y proporciones. La prueba del GLB local del 1M
+se omite en entornos donde no se haya importado el archivo licenciado.

@@ -25,6 +25,54 @@ const { ViewerFrameClock }=loadSource('viewer-frame-clock.ts');
 const { CabinLook, CABIN_FIELD_OF_VIEW }=loadSource('cabin-look.ts');
 const { addM4UpholsteryMask }=loadSource('m4-upholstery.ts');
 const { CabinMaterials }=loadSource('cabin-materials.ts');
+const { ImportedCar,IMPORTED_MODELS }=loadSource('imported-car.ts');
+
+async function geometryFixture(file){
+  const {GLTFLoader}=await import('three/addons/loaders/GLTFLoader.js');
+  const bytes=fs.readFileSync(file),jsonSize=bytes.readUInt32LE(12),data=JSON.parse(bytes.subarray(20,20+jsonSize));
+  data.materials=data.materials.map(m=>({name:m.name,alphaMode:m.alphaMode,pbrMetallicRoughness:{baseColorFactor:m.pbrMetallicRoughness?.baseColorFactor??[1,1,1,1]}}));delete data.textures;delete data.images;
+  const encoded=Buffer.from(JSON.stringify(data)),json=Buffer.alloc(Math.ceil(encoded.length/4)*4,32);encoded.copy(json);
+  const binary=bytes.subarray(20+jsonSize),glb=Buffer.alloc(20+json.length+binary.length);
+  glb.writeUInt32LE(0x46546c67,0);glb.writeUInt32LE(2,4);glb.writeUInt32LE(glb.length,8);glb.writeUInt32LE(json.length,12);glb.writeUInt32LE(0x4e4f534a,16);json.copy(glb,20);binary.copy(glb,20+json.length);
+  const {scene}=await new GLTFLoader().parseAsync(glb.buffer.slice(glb.byteOffset,glb.byteOffset+glb.byteLength),'');scene.updateMatrixWorld(true);
+  const source=new T.Group();let expected=0;
+  scene.traverse(n=>{if(n.isMesh){
+    expected+=(n.geometry.index?.count??n.geometry.attributes.position.count)/3;
+    const geometry=new T.BufferGeometry();for(const [name,a]of Object.entries(n.geometry.attributes))geometry.setAttribute(name,new T.BufferAttribute(a.array,a.itemSize,a.normalized));
+    if(n.geometry.index)geometry.setIndex(new T.BufferAttribute(n.geometry.index.array,1));
+    const material=new T.MeshStandardMaterial({transparent:n.material.transparent,opacity:n.material.opacity});material.name=n.material.name;
+    const mesh=new T.Mesh(geometry,material);mesh.name=n.name;mesh.matrixAutoUpdate=false;mesh.matrix.fromArray(n.matrixWorld.elements);
+    const group=new T.Group(),names=[];for(let parent=n.parent;parent;parent=parent.parent)names.push(parent.name);group.name=names.join('/');group.add(mesh);source.add(group);
+  }});return {source,expected};
+}
+for(const id of Object.keys(IMPORTED_MODELS)){
+  const file=path.resolve(__dirname,'../public/models',IMPORTED_MODELS[id].file);
+  test(id+' preserves body/cabin geometry, proportions and both wheel movements',{skip:!fs.existsSync(file)&&id==='1m'},async()=>{
+    const {source,expected}=await geometryFixture(file),car=new ImportedCar(source,id,new T.Texture(),1),all=meshes(car.group);
+    const triangles=all.reduce((sum,m)=>sum+(m.geometry.index?.count??m.geometry.attributes.position.count)/3,0);assert.equal(triangles,expected);
+    const box=new T.Box3().setFromObject(car.group),size=box.getSize(new T.Vector3());
+    assert.ok(Math.abs(size.x-IMPORTED_MODELS[id].length)<.001);assert.ok(size.y>1&&size.y<2.1);assert.ok(size.z>1.5&&size.z<2.5);assert.ok(Math.abs(box.min.y)<.001);
+    assert.ok(car.parts.some(p=>p.kind==='wheels'&&p.offset.z===.85));assert.ok(car.parts.some(p=>p.kind==='wheels'&&p.offset.z===-.85));
+    car.update('#684091','forged','#c9c5b5',false,'paint');
+    if(id==='e34'){
+      const dashboard=all.find(m=>m.material.name==='INT_DASH');assert.ok(dashboard);assert.equal(dashboard.material.transparent,false);assert.equal(dashboard.material.opacity,1);
+    }
+    if(id==='1m'){
+      const masks=all.map(m=>m.geometry.getAttribute('cabinUpholsteryMask')).filter(Boolean);
+      assert.ok(masks.some(a=>Array.from(a.array).includes(255)));assert.ok(masks.some(a=>Array.from(a.array).includes(0)));
+    }
+  });
+}
+test('all eight catalog previews are PNGs with transparent padding and no opaque background',()=>{
+  const {PNG}=require('pngjs');
+  for(const id of ['m4','e46','m2','e92','x6','e34','1m','f82']){
+    const p=PNG.sync.read(fs.readFileSync(path.resolve(__dirname,'../public/models/previews',id+'.png')));
+    assert.equal(p.width,1000);assert.equal(p.height,540);
+    let clear=0,solid=0;for(let i=3;i<p.data.length;i+=4){if(p.data[i]===0)clear++;if(p.data[i]===255)solid++;}
+    assert.ok(clear>p.width*p.height*.25,id+' must have transparent background');assert.ok(solid>50000,id+' must contain the vehicle');
+    for(const [x,y]of [[0,0],[999,0],[0,539],[999,539]])assert.equal(p.data[(y*1000+x)*4+3],0);
+  }
+});
 function part(material, x=0, displacement=1) {
   const geometry=new T.BufferGeometry().setAttribute('position',new T.Float32BufferAttribute([x,0,0,x+1,0,0,x,1,0],3));
   const mesh=new T.Mesh(geometry,material);mesh.castShadow=true;mesh.layers.enable(2);

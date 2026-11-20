@@ -24,10 +24,10 @@ export class AppComponent implements OnDestroy {
   apiOnline=signal(false); toast=signal(''); saved=signal(false); help=signal(false);
   private toastTimer?: ReturnType<typeof setTimeout>;
   car=computed(()=>this.catalog().models.find(m=>m.id===this.model())!);
-  modelWatermark=computed(()=>({m4:'THE M4',m2:'THE M2',e46:'THE E46',e92:'THE E92'} as Record<string,string>)[this.model()]);
-  modelEdition=computed(()=>({m4:'M Performance',m2:'G87',e46:'E46 Berlina',e92:'E92 · Stance'} as Record<string,string>)[this.model()]);
-  heritage=computed(()=>this.model()==='e46');
-  priceNote=computed(()=>({e46:'Berlina E46 · Precio simulado',e92:'Preparación stance · Precio simulado'} as Record<string,string>)[this.model()]??'Precio orientativo · Configuración de demostración');
+  modelWatermark=computed(()=>({m4:'THE M4',m2:'THE M2',e46:'THE E46',e92:'THE E92',x6:'THE X6',e34:'THE E34','1m':'THE 1M',f82:'THE F82'} as Record<string,string>)[this.model()]);
+  modelEdition=computed(()=>({m4:'M Performance',m2:'G87',e46:'E46 Berlina',e92:'E92 · Stance',x6:'G06 · xDrive40i',e34:'E34 · M5','1m':'E82 · 1M',f82:'F82 · M4'} as Record<string,string>)[this.model()]);
+  heritage=computed(()=>['e46','e34'].includes(this.model()));
+  priceNote=computed(()=>({e46:'Berlina E46 · Precio simulado',e92:'Preparación stance · Precio simulado',x6:'X6 · Precio simulado',e34:'M5 E34 · Precio simulado','1m':'1M Coupé · Precio simulado',f82:'M4 F82 · Precio simulado'} as Record<string,string>)[this.model()]??'Precio orientativo · Configuración de demostración');
   selectedPaint=computed(()=>this.catalog().paints.find(p=>p.id===this.paint())!);
   selectedWheels=computed(()=>this.catalog().wheels.find(p=>p.id===this.wheels())!);
   selectedInterior=computed(()=>this.catalog().interiors.find(p=>p.id===this.interior())!);

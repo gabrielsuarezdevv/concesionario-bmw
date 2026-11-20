@@ -9,7 +9,7 @@
     <div class="order-layout">
       <aside class="order-car" aria-label="Resumen del coche elegido">
         <p class="overline">DISEÑADO POR TI</p><h2>BMW {{order.configuration.modelName}}</h2>
-        <img class="order-preview" [src]="'models/previews/'+order.configuration.model+'.jpg'" [alt]="'BMW '+order.configuration.modelName" width="500" height="270">
+        <img class="order-preview" [src]="'models/previews/'+order.configuration.model+'.png'" [alt]="'BMW '+order.configuration.modelName" width="500" height="270">
         <dl><div><dt>Pintura</dt><dd>{{order.configuration.paintName}}</dd></div><div><dt>Llantas</dt><dd>{{order.configuration.wheelsName}}</dd></div><div><dt>Interior</dt><dd>{{order.configuration.interiorName}}</dd></div></dl>
         <div class="order-total"><span>Total de referencia</span><strong>{{order.configuration.total | currency:'EUR':'symbol':'1.0-0'}}</strong></div>
         <p class="order-fineprint">Pedido de demostración. No se realiza ningún cobro.</p>

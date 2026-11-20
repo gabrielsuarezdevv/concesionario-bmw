@@ -10,6 +10,8 @@ import { CabinRendering } from './cabin-rendering';
 import { E46Car } from './e46-car';
 import { M2Car } from './m2-car';
 import { E92Car } from './e92-car';
+import { ImportedCar, IMPORTED_MODELS, isImportedModel } from './imported-car';
+import { createCatalogPreview } from './catalog-preview';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import { ViewerQuality } from './viewer-quality';
 import { AssembledCar } from './assembled-car';
@@ -24,10 +26,15 @@ type Part = { group: T.Group; origin: T.Vector3; offset: T.Vector3; kind: string
     @if(modelLoading()) { <div class="loading-model">Preparando tu BMW {{modelName}}…</div> }
     @if(modelLoadError()) { <div class="viewer-error"><span>No se ha podido cargar el {{modelName}}.</span><p>Recarga la página para volver a intentarlo.</p></div> }
     @if (error()) { <div class="viewer-error"><span>El visor 3D necesita WebGL</span><p>Activa la aceleración gráfica de tu navegador para explorar el vehículo.</p></div> }
+    @if(previewTools) { <button style="position:absolute;top:8px;left:8px;z-index:20;background:white;border:1px solid #0066b1;padding:12px" [disabled]="modelLoading()" (click)="exportPreview()">Generar PNG transparente</button>
+      @if(previewImage()){<img [src]="previewImage()" alt="PNG transparente generado" style="position:absolute;bottom:50px;right:10px;width:180px;z-index:20">} }
     @if(showStats) { <output class="viewer-stats" aria-label="Rendimiento del visor">{{stats()}}</output> }`,
   styles: [':host{display:block;position:absolute;inset:0}.three-stage{width:100%;height:100%;touch-action:none;outline-offset:-4px}.loading-model{position:absolute;bottom:55px;left:0;right:0;text-align:center;font-size:10px;letter-spacing:1px;color:var(--muted)}.viewer-error{position:absolute;inset:30% 10%;text-align:center;color:var(--accent)}.viewer-error p{font-size:14px;color:var(--muted)}.viewer-stats{position:absolute;bottom:49px;left:20px;z-index:3;pointer-events:none;background:#ffffffed;border:1px solid #dce1e7;padding:6px 9px;font:11px monospace;color:#3d4957}']
 })
 export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
+  readonly previewTools=isDevMode() && new URLSearchParams(location.search).get('assetPreview')==='1';
+  readonly previewImage=signal('');
+  exportPreview(){if(this.renderer&&!this.modelLoading()){this.previewImage.set(createCatalogPreview(this.renderer,this.scene,this.activeParts()));this.requestRender();}}
   readonly showStats=isDevMode() && new URLSearchParams(location.search).get('viewerStats')==='1';
   readonly stats=signal('Midiendo rendimiento…');
   private statsFrames=0;
@@ -97,10 +104,13 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
   private e46?: E46Car;
   private m2?: M2Car;
   private e92?: E92Car;
+  private importedCars=new Map<string,ImportedCar>();
+  importedLoading=signal<Record<string,boolean>>({});
+  importedErrors=signal<Record<string,boolean>>({});
   e92Loading=signal(false);
   e92LoadError=signal(false);
-  modelLoading() { return this.model==='e46'?this.e46Loading():this.model==='m2'?this.m2Loading():this.model==='m4'?this.loading():this.e92Loading(); }
-  modelLoadError() { return this.model==='e46'?this.e46LoadError():this.model==='m2'?this.m2LoadError():this.e92LoadError(); }
+  modelLoading() { return this.model==='e46'?this.e46Loading():this.model==='m2'?this.m2Loading():this.model==='m4'?this.loading():this.model==='e92'?this.e92Loading():!!this.importedLoading()[this.model]; }
+  modelLoadError() { return this.model==='e46'?this.e46LoadError():this.model==='m2'?this.m2LoadError():this.model==='e92'?this.e92LoadError():!!this.importedErrors()[this.model]; }
 
   ngAfterViewInit() {
     try {
@@ -134,7 +144,7 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
       if(this.model==='m4')this.loadDetailedCar();
       if(this.model==='e46')this.loadE46();
       if(this.model==='m2')this.loadM2();
-      this.loadE92();
+      this.loadE92();this.loadImportedCar();
       this.car.traverse(object=>{if(object instanceof T.Mesh)object.layers.enable(1);});
       this.camera.position.copy(this.targetPosition);
       this.controls = new OrbitControls(this.camera, this.renderer.domElement);
@@ -161,7 +171,7 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
       if(changes['model'] && this.model==='m4')this.loadDetailedCar();
       if(changes['model'] && this.model==='e46')this.loadE46();
       if(changes['model'] && this.model==='m2')this.loadM2();
-      if(changes['model'])this.loadE92();
+      if(changes['model']){this.loadE92();this.loadImportedCar();}
       this.applyInputs();
       if(changes['model'] || changes['exploded'] || changes['view'] || changes['wheels'])this.shadowDirty=true;
       if(changes['model'] || changes['view'] || changes['resetKey'] || changes['exploded'])this.moveCamera();
@@ -179,6 +189,7 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
     if(this.e46){this.e46.group.visible=this.model==='e46';if(this.e46.group.visible)this.e46.update(this.paint,this.wheels,this.exploded,this.activePart);}
     if(this.m2){this.m2.group.visible=this.model==='m2';if(this.m2.group.visible)this.m2.update(this.paint,this.wheels,this.interior,this.exploded,this.activePart);}
     if(this.e92){this.e92.group.visible=this.model==='e92';if(this.e92.group.visible)this.e92.update(this.paint,this.wheels,this.interior,this.exploded,this.activePart);}
+    for(const [id,car]of this.importedCars){car.group.visible=this.model===id;if(car.group.visible)car.update(this.paint,this.wheels,this.interior,this.exploded,this.activePart);}
     for(const material of [this.body,...this.detailedPaints]) {
       material.color.set(this.paint);
       material.metalness=this.paint==='#e8e8de'?.08:this.paint==='#a2a8a6'?.24:.65;
@@ -197,8 +208,8 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
   private moveCamera() {
     const inside=this.view==='interior';
     this.releaseInteriorLook();this.cabinLook.reset();this.lookMotionUntil=0;
-    this.targetPosition.set(...(inside?(this.model==='e46'?[.10,1.12,-.36]:this.model==='m2'?[-.22,1.08,-.38]:this.model==='e92'?[.02,1.06,-.38]:[-.30,1.12,-.38]):this.exploded?[7.8,4.2,8.0]:this.narrowViewport?[5.8,2.3,6.0]:[5.2,2.1,5.4]) as [number,number,number]);
-    this.targetLook.set(...(inside?(this.model==='e46'?[1,.72,-.12]:this.model==='m2'?[.8,.88,-.18]:this.model==='e92'?[1,.83,-.12]:[.68,.85,-.10]):[0,this.exploded?1:.65,0]) as [number,number,number]);
+    this.targetPosition.set(...(inside?(isImportedModel(this.model)?IMPORTED_MODELS[this.model].eye:this.model==='e46'?[.10,1.12,-.36]:this.model==='m2'?[-.22,1.08,-.38]:this.model==='e92'?[.02,1.06,-.38]:[-.30,1.12,-.38]):this.exploded?[7.8,4.2,8.0]:this.narrowViewport?[5.8,2.3,6.0]:[5.2,2.1,5.4]) as [number,number,number]);
+    this.targetLook.set(...(inside?(isImportedModel(this.model)?IMPORTED_MODELS[this.model].look:this.model==='e46'?[1,.72,-.12]:this.model==='m2'?[.8,.88,-.18]:this.model==='e92'?[1,.83,-.12]:[.68,.85,-.10]):[0,this.exploded?1:.65,0]) as [number,number,number]);
     this.camera.fov=inside?CABIN_FIELD_OF_VIEW:30;this.camera.updateProjectionMatrix();
     if(this.controls) { this.controls.enabled=!inside;this.controls.minDistance=inside?.05:4; this.controls.maxDistance=inside?2.5:12; this.controls.maxPolarAngle=inside?Math.PI:Math.PI/2-.02; this.controls.enableRotate=!inside; }
     this.movingCamera=true;
@@ -457,6 +468,17 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
       this.loading.set(false);this.applyInputs();this.shadowDirty=true;this.requestRender();
     },undefined,()=>{this.loading.set(false);this.requestRender();console.warn('Detailed M4 unavailable; using procedural concept.');});
   }
+  private loadImportedCar(){
+    const id=this.model;if(!isImportedModel(id)||this.importedCars.has(id)||this.importedLoading()[id]||this.importedErrors()[id])return;
+    this.importedLoading.update(state=>({...state,[id]:true}));
+    new GLTFLoader().load('/models/'+IMPORTED_MODELS[id].file,gltf=>{
+      if(this.disposed)return;
+      try{const car=new ImportedCar(gltf.scene,id,this.paintNormal!,Math.min(8,this.renderer!.capabilities.getMaxAnisotropy()));
+        this.importedCars.set(id,car);this.scene.add(car.group);this.applyInputs();this.shadowDirty=true;this.requestRender();
+      }catch(error){console.error('BMW model adaptation failed',error);this.importedErrors.update(state=>({...state,[id]:true}));}
+      this.importedLoading.update(state=>({...state,[id]:false}));
+    },undefined,()=>{this.importedLoading.update(state=>({...state,[id]:false}));this.importedErrors.update(state=>({...state,[id]:true}));});
+  }
   private loadE92() {
     if(this.model!=='e92'||this.e92||this.e92Loading()||this.e92LoadError())return;
     this.e92Loading.set(true);
@@ -500,11 +522,12 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
     if(this.model==='e46')return this.e46?.parts??[];
     if(this.model==='m2')return this.m2?.parts??[];
     if(this.model==='e92')return this.e92?.parts??[];
+    if(isImportedModel(this.model))return this.importedCars.get(this.model)?.parts??[];
     return this.detailedParts.length?this.detailedParts:this.parts;
   }
   private updateRepresentation(geometryMoving:boolean) {
     const source=this.model==='m4'?(this.detailedParts.length?this.detailed:this.car)
-      :this.model==='e46'?this.e46?.group:this.model==='m2'?this.m2?.group:this.e92?.group;
+      :this.model==='e46'?this.e46?.group:this.model==='m2'?this.m2?.group:this.model==='e92'?this.e92?.group:this.importedCars.get(this.model)?.group;
     if(!source)return;
     const key=this.model+(this.model==='e46'?':'+this.wheels:'');
     if(this.assembled && this.assembledKey!==key) {
@@ -558,7 +581,7 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
     if(continuous && this.quality.beginMotion())this.applyResolution();
     if(continuous && !this.modelLoading() && this.quality.observe(interval))this.applyResolution();
     if(!continuous && this.quality.ratio!==this.quality.maximum){this.quality.restore();this.applyResolution();}
-    if(this.renderer && this.view==='interior' && (this.detailed.visible || this.e46?.group.visible || this.m2?.group.visible || this.e92?.group.visible)) {
+    if(this.renderer && this.view==='interior' && (this.detailed.visible || this.e46?.group.visible || this.m2?.group.visible || this.e92?.group.visible || this.importedCars.get(this.model)?.group.visible)) {
       if(!this.cabinRendering) {
         this.cabinRendering=new CabinRendering(this.renderer,this.scene,this.camera);
         const {clientWidth:w,clientHeight:h}=this.stage.nativeElement;

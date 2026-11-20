@@ -9,3 +9,5 @@ backend/data/
 .idea/
 .vscode/
 artifacts/
+# Sketchfab Standard asset: user-owned local copy, not redistributed as a standalone resource.
+frontend/public/models/bmw-1m.glb

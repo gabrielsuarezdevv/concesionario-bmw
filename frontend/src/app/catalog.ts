@@ -7,7 +7,11 @@ export const DEMO_CATALOG: Catalog = {
     { id: 'm4', name: 'M4 Competition', subtitle: 'La expresión del carácter.', price: 124500, power: '530', acceleration: '3,5', drive: 'M xDrive' },
     { id: 'e46', name: '330i E46', subtitle: 'El carácter de un clásico.', price: 35000, power: '231', acceleration: '6,5', drive: 'Trasera' },
     { id: 'm2', name: 'M2 G87', subtitle: 'Toda la esencia M. Sin filtros.', price: 96900, power: '460', acceleration: '4,1', drive: 'Trasera' },
-    { id: 'e92', name: 'M3 E92', subtitle: 'El pulso de otra generación.', price: 58000, power: '420', acceleration: '4,8', drive: 'Trasera' }
+    { id: 'e92', name: 'M3 E92', subtitle: 'El pulso de otra generación.', price: 58000, power: '420', acceleration: '4,8', drive: 'Trasera' },
+    {"id":"x6","name":"X6 xDrive40i","subtitle":"Presencia sin límites.","price":85000,"power":"N/D","acceleration":"N/D","drive":"xDrive"},
+    {"id":"e34","name":"M5 E34","subtitle":"La esencia de una leyenda.","price":48000,"power":"N/D","acceleration":"N/D","drive":"Trasera"},
+    {"id":"1m","name":"1M Coupé","subtitle":"Compacto. Intenso. Inconfundible.","price":62000,"power":"N/D","acceleration":"N/D","drive":"Trasera"},
+    {"id":"f82","name":"M4 F82","subtitle":"Una silueta que marca época.","price":65000,"power":"N/D","acceleration":"N/D","drive":"Trasera"}
   ],
   paints: [
     { id: 'blue', name: 'Portimao Blue', hex: '#2868b2', price: 0 },
