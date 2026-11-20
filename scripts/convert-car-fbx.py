@@ -6,7 +6,6 @@ from pathlib import Path
 import bpy
 
 parser=argparse.ArgumentParser()
-parser.add_argument('--model',required=True,choices=['1m','x6','e34'])
 parser.add_argument('--input',required=True)
 parser.add_argument('--textures',required=True)
 parser.add_argument('--output',required=True)
@@ -29,4 +28,4 @@ if missing:raise RuntimeError('Missing texture images: '+', '.join(missing))
 output.parent.mkdir(parents=True,exist_ok=True)
 bpy.ops.export_scene.gltf(filepath=str(output),export_format='GLB',export_animations=False,
     export_cameras=False,export_lights=False,export_apply=True,export_image_format='AUTO')
-print('Converted',args.model,'to',output)
+print('Converted',source.name,'to',output)

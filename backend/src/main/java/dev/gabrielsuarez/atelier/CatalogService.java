@@ -17,8 +17,6 @@ public class CatalogService {
             new Car("m2", "M2 G87", "Toda la esencia M. Sin filtros.", 96900, "460", "4,1", "Trasera"),
             new Car("e92", "M3 E92", "El pulso de otra generación.", 58000, "420", "4,8", "Trasera"),
             new Car("x6", "X6 xDrive40i", "Presencia sin límites.", 85000, "N/D", "N/D", "xDrive"),
-            new Car("e34", "M5 E34", "La esencia de una leyenda.", 48000, "N/D", "N/D", "Trasera"),
-            new Car("1m", "1M Coupé", "Compacto. Intenso. Inconfundible.", 62000, "N/D", "N/D", "Trasera"),
             new Car("f82", "M4 F82", "Una silueta que marca época.", 65000, "N/D", "N/D", "Trasera")),
         List.of(new Option("blue", "Portimao Blue", 0, "#2868b2"), new Option("grey", "Brooklyn Grey", 1100, "#a2a8a6"),
             new Option("black", "Sapphire Black", 1100, "#202326"), new Option("green", "Isle of Man Green", 1900, "#276b5c"), new Option("white", "Alpine White", 0, "#e8e8de"),

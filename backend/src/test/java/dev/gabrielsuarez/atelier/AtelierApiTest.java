@@ -16,9 +16,9 @@ class AtelierApiTest {
     @Autowired MockMvc mvc;
     @Autowired ObjectMapper json;
     private final String selection = "{\"model\":\"m4\",\"paint\":\"green\",\"wheels\":\"forged\",\"interior\":\"cognac\",\"total\":1}";
-    @Test void offersEightModelsAndRejectsRetiredModels() throws Exception {
+    @Test void offersSixModelsAndRejectsRetiredModels() throws Exception {
         mvc.perform(get("/api/catalog")).andExpect(status().isOk())
-            .andExpect(jsonPath("$.models.length()").value(8))
+            .andExpect(jsonPath("$.models.length()").value(6))
             .andExpect(jsonPath("$.models[0].id").value("m4"))
             .andExpect(jsonPath("$.models[1].id").value("e46"))
             .andExpect(jsonPath("$.models[1].name").value("330i E46"))
@@ -26,10 +26,8 @@ class AtelierApiTest {
             .andExpect(jsonPath("$.models[2].power").value("460"))
             .andExpect(jsonPath("$.models[3].id").value("e92"))
             .andExpect(jsonPath("$.models[4].id").value("x6"))
-            .andExpect(jsonPath("$.models[5].id").value("e34"))
-            .andExpect(jsonPath("$.models[6].id").value("1m"))
-            .andExpect(jsonPath("$.models[7].id").value("f82"));
-        for (String retired : new String[]{"i4","e36","gtr"}) {
+            .andExpect(jsonPath("$.models[5].id").value("f82"));
+        for (String retired : new String[]{"i4","e36","gtr","e34","1m"}) {
             for(String endpoint : new String[]{"/api/quotes","/api/configurations","/api/checkouts"})
                 mvc.perform(post(endpoint).contentType(MediaType.APPLICATION_JSON).content(selection.replace("m4", retired)))
                     .andExpect(status().isBadRequest());
@@ -57,8 +55,8 @@ class AtelierApiTest {
             .andExpect(jsonPath("$.total").value(103000));
     }
     @Test void savesAndQuotesAddedCarsWithTheirOwnPrices() throws Exception {
-        String[] models={"e92","x6","e34","1m","f82"};
-        int[] prices={58000,85000,48000,62000,65000};
+        String[] models={"e92","x6","f82"};
+        int[] prices={58000,85000,65000};
         for(int i=0;i<models.length;i++) {
             String request=selection.replace("m4",models[i]);
             mvc.perform(post("/api/quotes").contentType(MediaType.APPLICATION_JSON).content(request))

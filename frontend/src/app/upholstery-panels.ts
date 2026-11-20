@@ -40,8 +40,3 @@ export function addUpholsteryPanelMask(geometry:T.BufferGeometry,select:(bounds:
 
   geometry.setAttribute('cabinUpholsteryMask',new T.Uint8BufferAttribute(mask,1,true));return geometry;
 }
-/** The 1M atlas also covers the dashboard, doors and steering wheel. */
-export function is1MSeatPanel(b:PanelBounds){
-  if(b.minY<.35||b.maxY>1.22||b.minZ<-.65||b.maxZ>.65)return false;
-  return b.maxX<-.45||(b.minX>-.6&&b.maxX<=.3&&(b.minZ>=.08||b.maxZ<=-.08));
-}

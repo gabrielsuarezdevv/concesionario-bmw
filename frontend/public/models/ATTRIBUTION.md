@@ -93,27 +93,6 @@ User-supplied source FBX, converted to bmw-x6.glb with embedded textures (103,62
 The converted asset, runtime material adaptations and its preview remain under CC BY-NC-SA 4.0.
 Noncommercial demonstration only; the 85,000 EUR price is fictional.
 
-## BMW M5 E34
-
-temich — https://sketchfab.com/temich_
-https://sketchfab.com/3d-models/bmw-m5-e34-10a95624ce5046f5805bd9d17256e033
-CC BY-NC 4.0 — https://creativecommons.org/licenses/by-nc/4.0/
-The uploader credits Assetto Corsa for the base body and describes adapted E34 details,
-BBS wheels, glass and tyre dirt masks. Source link confirmed by the user.
-User-supplied FBX, converted to bmw-e34.glb with embedded textures (292,869 rendered triangles,
-including source mesh instances). Noncommercial demonstration only; 48,000 EUR is fictional.
-
-## BMW 1M Coupé (local asset)
-
-Animase — https://sketchfab.com/NodeStar
-https://sketchfab.com/3d-models/ac-bmw-1m-free-f0ac8fa9bf1e4d79a03a4a3ea6d24afa
-Sketchfab Free Standard — https://sketchfab.com/licenses
-The uploader identifies the source as Assetto Corsa (Kunos Simulazioni).
-User-supplied FBX converted locally to bmw-1m.glb (100,605 triangles). This file is ignored by Git:
-the Standard license does not permit redistributing it as a standalone downloadable asset.
-The website implementation and rendered preview are included; import your licensed local copy
-using scripts/convert-car-fbx.py as explained in README.md. The 62,000 EUR demo price is fictional.
-
 ## BMW M4 F82
 
 Black Snow — https://sketchfab.com/BlackSnow02
@@ -122,11 +101,10 @@ CC BY 4.0 — https://creativecommons.org/licenses/by/4.0/
 The GLB provided inside the user's F82 source archive is retained, with attribution added:
 bmw-f82.glb (506,888 triangles). The 65,000 EUR base price is fictional demonstration data.
 
-For all four imported models, the complete exterior and their own cabin share one normalization
+For both imported models, the complete exterior and their own cabin share one normalization
 transform. Original geometry, UVs and textures are retained. Runtime changes include configurable
 paint, rim finish and upholstery, adapted glazing and illustrative manual separation by groups.
-The 1M's shared leather atlas uses whole connected seat panels to keep the dashboard and wheel
-in their original material. These are artistic assets, not factory-accurate engineering twins.
-Power and acceleration remain N/D for these custom variants because they have not been verified.
+These are artistic assets, not factory-accurate engineering twins.
+The F82's originally blue door and dashboard upholstery panels follow the interior selection, together with its seats. Power and acceleration remain N/D for these custom variants because they have not been verified.
 Transparent PNG renders contain only each vehicle, with no showroom background, floor or labels;
 each derived preview retains the applicable source asset license stated above.

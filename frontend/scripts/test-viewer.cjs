@@ -47,25 +47,30 @@ async function geometryFixture(file){
 }
 for(const id of Object.keys(IMPORTED_MODELS)){
   const file=path.resolve(__dirname,'../public/models',IMPORTED_MODELS[id].file);
-  test(id+' preserves body/cabin geometry, proportions and both wheel movements',{skip:!fs.existsSync(file)&&id==='1m'},async()=>{
+  test(id+' preserves body/cabin geometry, proportions and both wheel movements',async()=>{
     const {source,expected}=await geometryFixture(file),car=new ImportedCar(source,id,new T.Texture(),1),all=meshes(car.group);
     const triangles=all.reduce((sum,m)=>sum+(m.geometry.index?.count??m.geometry.attributes.position.count)/3,0);assert.equal(triangles,expected);
     const box=new T.Box3().setFromObject(car.group),size=box.getSize(new T.Vector3());
     assert.ok(Math.abs(size.x-IMPORTED_MODELS[id].length)<.001);assert.ok(size.y>1&&size.y<2.1);assert.ok(size.z>1.5&&size.z<2.5);assert.ok(Math.abs(box.min.y)<.001);
     assert.ok(car.parts.some(p=>p.kind==='wheels'&&p.offset.z===.85));assert.ok(car.parts.some(p=>p.kind==='wheels'&&p.offset.z===-.85));
     car.update('#684091','forged','#c9c5b5',false,'paint');
-    if(id==='e34'){
-      const dashboard=all.find(m=>m.material.name==='INT_DASH');assert.ok(dashboard);assert.equal(dashboard.material.transparent,false);assert.equal(dashboard.material.opacity,1);
-    }
-    if(id==='1m'){
-      const masks=all.map(m=>m.geometry.getAttribute('cabinUpholsteryMask')).filter(Boolean);
-      assert.ok(masks.some(a=>Array.from(a.array).includes(255)));assert.ok(masks.some(a=>Array.from(a.array).includes(0)));
+    if(id==='f82'){
+      // The source reuses its blue upholstery on seats, doors and the dashboard.
+      const panels=all.filter(m=>/^ARm4_(color_interior|INTER_tcz)$/.test(m.material.name));
+      assert.ok(panels.some(m=>m.material.name==='ARm4_color_interior'));
+      assert.ok(panels.some(m=>m.material.name==='ARm4_INTER_tcz'));
+      for(const color of ['#252827','#9a5730','#c9c5b5','#8b3046','#315a82']){
+        car.update('#684091','forged',color,false,'interior');
+        for(const panel of panels)assert.equal(panel.material.color.getHexString(),color.slice(1));
+      }
+      const carbon=all.find(m=>m.material.name==='ARm4_common_carbon');
+      assert.ok(carbon);assert.notEqual(carbon.material.color.getHexString(),'315a82');
     }
   });
 }
-test('all eight catalog previews are PNGs with transparent padding and no opaque background',()=>{
+test('all six catalog previews are PNGs with transparent padding and no opaque background',()=>{
   const {PNG}=require('pngjs');
-  for(const id of ['m4','e46','m2','e92','x6','e34','1m','f82']){
+  for(const id of ['m4','e46','m2','e92','x6','f82']){
     const p=PNG.sync.read(fs.readFileSync(path.resolve(__dirname,'../public/models/previews',id+'.png')));
     assert.equal(p.width,1000);assert.equal(p.height,540);
     let clear=0,solid=0;for(let i=3;i<p.data.length;i+=4){if(p.data[i]===0)clear++;if(p.data[i]===255)solid++;}
