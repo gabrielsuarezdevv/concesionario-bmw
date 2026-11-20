@@ -21,7 +21,13 @@ export class AppComponent implements OnDestroy {
   private http=inject(HttpClient);
   private injector=inject(Injector);
   section=signal(this.locationSection());
+  activeSection=signal(this.section());
   home=computed(()=>this.section()==='inicio');
+  private sectionFrame=0;
+  private readonly queueSectionUpdate=()=>{
+    if(this.destroyed||this.home()||this.sectionFrame)return;
+    this.sectionFrame=requestAnimationFrame(()=>{this.sectionFrame=0;this.updateActiveSection();});
+  };
   catalog=signal<Catalog>(DEMO_CATALOG);
   model=signal('m4'); paint=signal('blue'); wheels=signal('sport'); interior=signal('black');
   activePart=signal('paint'); view=signal('exterior'); exploded=signal(false); autoRotate=signal(false); resetKey=signal(0);
@@ -39,6 +45,8 @@ export class AppComponent implements OnDestroy {
   partTitle=computed(()=>({paint:'Carrocería y pintura',wheels:'Llantas y frenos',interior:'Habitáculo y tapicería'}[this.activePart()]));
   constructor() {
     if(this.checkoutToken!==null)return;
+    window.addEventListener('scroll',this.queueSectionUpdate,{passive:true});
+    window.addEventListener('resize',this.queueSectionUpdate,{passive:true});
     const query=new URLSearchParams(location.search);
     const shared=query.has('model');
     let selection: Record<string,string>={};
@@ -66,6 +74,7 @@ export class AppComponent implements OnDestroy {
   chooseModel(id:string) {
     if(!this.catalog().models.some(m=>m.id===id))return;
     this.model.set(id);this.saved.set(false);this.reset();
+    this.activeSection.set('configurador');
     if(this.section()!=='configurador') {
       const url=new URL(location.href);url.hash='configurador';history.pushState(null,'',url);
       this.section.set('configurador');
@@ -82,6 +91,7 @@ export class AppComponent implements OnDestroy {
     const url=new URL(location.href);url.hash=destination;history.pushState(null,'',url);
     const switchingPage=this.home()!==(destination==='inicio');
     this.section.set(destination);
+    this.activeSection.set(destination);
     this.scrollToSection(destination,!switchingPage,true);
   }
   private locationSection() {
@@ -91,7 +101,24 @@ export class AppComponent implements OnDestroy {
   }
   @HostListener('window:popstate')
   @HostListener('window:hashchange')
-  onLocationChange() { const section=this.locationSection();this.section.set(section);this.scrollToSection(section,false); }
+  onLocationChange() { const section=this.locationSection();this.section.set(section);this.activeSection.set(section);this.scrollToSection(section,false); }
+  private updateActiveSection() {
+    if(this.checkoutToken!==null)return;
+    if(this.home()){this.activeSection.set('inicio');return;}
+    const sections=['configurador','coleccion','experiencia'].map(id=>document.getElementById(id))
+      .filter((element):element is HTMLElement=>element!==null);
+    if(!sections.length)return;
+    const headerBottom=document.querySelector('.header')?.getBoundingClientRect().bottom??0;
+    const readingLine=headerBottom+Math.min(240,(window.innerHeight-headerBottom)*.35);
+    let active=sections[0].id;
+    for(const section of sections) {
+      if(section.getBoundingClientRect().top>readingLine)break;
+      active=section.id;
+    }
+    // A short final section may never reach the reading line before the page ends.
+    if(Math.ceil(window.scrollY+window.innerHeight)>=document.documentElement.scrollHeight-2)active=sections[sections.length-1].id;
+    this.activeSection.set(active);
+  }
   private scrollToSection(section:string,animate:boolean,focus=false) {
     afterNextRender(()=>{
       const behavior=animate&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches?'smooth':'instant';
@@ -101,6 +128,7 @@ export class AppComponent implements OnDestroy {
         const heading=section==='inicio'?document.getElementById('welcome-title'):document.getElementById(section)?.querySelector<HTMLElement>('h1,h2');
         heading?.focus({preventScroll:true});
       }
+      this.updateActiveSection();
     },{injector:this.injector});
   }
   openSummary() {
@@ -134,7 +162,12 @@ export class AppComponent implements OnDestroy {
       });
     },3000);
   }
-  ngOnDestroy() { this.destroyed=true;clearTimeout(this.checkoutPoll);clearTimeout(this.toastTimer); }
+  ngOnDestroy() {
+    this.destroyed=true;clearTimeout(this.checkoutPoll);clearTimeout(this.toastTimer);
+    cancelAnimationFrame(this.sectionFrame);
+    window.removeEventListener('scroll',this.queueSectionUpdate);
+    window.removeEventListener('resize',this.queueSectionUpdate);
+  }
   selection() { return {model:this.model(),paint:this.paint(),wheels:this.wheels(),interior:this.interior()}; }
   notify(text:string) { clearTimeout(this.toastTimer);this.toast.set(text);this.toastTimer=setTimeout(()=>this.toast.set(''),6500); }
   private persistLocal(selection:Record<string,string>):boolean { try {localStorage.setItem('atelier.configuration',JSON.stringify(selection));return true;}catch{return false;} }
