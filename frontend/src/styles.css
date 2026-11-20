@@ -43,3 +43,8 @@
 @media(max-width:800px){.order-page{padding:32px 24px 55px}.order-layout{grid-template-columns:1fr;gap:34px;max-width:540px;margin:0 auto}.order-car{padding:22px}.order-preview{max-height:160px;margin:4px 0 12px}.order-car h2{font-size:26px}.order-car dl>div{padding:9px 0}.order-total{padding-top:18px}.order-total strong{font-size:32px}.order-header{height:76px;padding:0 22px}.order-header>span{display:none}.order-details h1,.order-state h1{font-size:36px}.order-state{margin:35px auto}.order-confirmation{padding-top:0}}@media(prefers-reduced-motion:reduce){.checkout-qr{animation:none}}
 .swatches.paint-swatches{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));width:min(100%,312px);gap:10px}.swatches.paint-swatches button{width:100%;max-width:42px;height:auto;aspect-ratio:1}.paint-swatches button>span{text-shadow:none}
 .swatches.leather{flex-wrap:wrap;gap:12px}.swatches.leather button{flex:0 0 42px;width:42px;height:42px}
+
+/* Keep navigation available when entering the catalog from the welcome page. */
+.header{position:sticky;top:0;z-index:20;background:var(--bg)}
+@media(max-width:800px){.header nav a{font-size:13px}}
+@media(max-width:380px){.header .brand-name{display:none}.header nav{gap:14px}}

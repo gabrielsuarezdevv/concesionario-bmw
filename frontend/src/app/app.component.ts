@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnDestroy, ViewChild, computed, inject, signal } from '@angular/core';
+import { Component, ElementRef, HostListener, Injector, OnDestroy, ViewChild, afterNextRender, computed, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { CurrencyPipe } from '@angular/common';
 import { timeout } from 'rxjs';
@@ -7,8 +7,9 @@ import { CheckoutView, orderEmailMessage } from './checkout';
 import { OrderCheckoutComponent } from './order-checkout.component';
 import { CarViewerComponent } from './car-viewer.component';
 import { Catalog, DEMO_CATALOG, Option } from './catalog';
+import { HomeComponent } from './home.component';
 
-@Component({ selector: 'app-root', standalone: true, imports: [CarViewerComponent, CurrencyPipe, OrderCheckoutComponent], templateUrl: './app.component.html' })
+@Component({ selector: 'app-root', standalone: true, imports: [CarViewerComponent, CurrencyPipe, OrderCheckoutComponent, HomeComponent], templateUrl: './app.component.html' })
 export class AppComponent implements OnDestroy {
   readonly checkoutToken = new URLSearchParams(location.search).has('checkout') ? new URLSearchParams(location.search).get('checkout')! : null;
   checkout=signal<CheckoutView|null>(null); qrImage=signal(''); checkoutLink=signal(''); buying=signal(false); purchaseError=signal('');
@@ -18,6 +19,9 @@ export class AppComponent implements OnDestroy {
   private checkoutRequestId=0;
   @ViewChild('summary') summary!: ElementRef<HTMLDialogElement>;
   private http=inject(HttpClient);
+  private injector=inject(Injector);
+  section=signal(this.locationSection());
+  home=computed(()=>this.section()==='inicio');
   catalog=signal<Catalog>(DEMO_CATALOG);
   model=signal('m4'); paint=signal('blue'); wheels=signal('sport'); interior=signal('black');
   activePart=signal('paint'); view=signal('exterior'); exploded=signal(false); autoRotate=signal(false); resetKey=signal(0);
@@ -40,6 +44,7 @@ export class AppComponent implements OnDestroy {
     let selection: Record<string,string>={};
     try { selection=shared?Object.fromEntries(query):JSON.parse(localStorage.getItem('atelier.configuration')||'{}'); } catch { /* Storage may be unavailable. */ }
     this.restore(selection);
+    this.scrollToSection(this.section(),false);
     this.http.get<Catalog>('/api/catalog').pipe(timeout(4000)).subscribe({next:data=>{this.catalog.set(data);if(!data.models.some(m=>m.id===this.model()))this.model.set(data.models[0].id);this.apiOnline.set(true);},error:()=>this.apiOnline.set(false)});
   }
   private restore(s:Record<string,string>) {
@@ -58,16 +63,45 @@ export class AppComponent implements OnDestroy {
     this.activePart.set(type);
     this.saved.set(false);
   }
-  chooseModel(id:string) { if(!this.catalog().models.some(m=>m.id===id))return;this.model.set(id);this.saved.set(false);this.reset(); document.getElementById('configurador')?.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'}); }
+  chooseModel(id:string) {
+    if(!this.catalog().models.some(m=>m.id===id))return;
+    this.model.set(id);this.saved.set(false);this.reset();
+    if(this.section()!=='configurador') {
+      const url=new URL(location.href);url.hash='configurador';history.pushState(null,'',url);
+      this.section.set('configurador');
+    }
+    this.scrollToSection('configurador',true,true);
+  }
   setView(view:string) { this.view.set(view); if(view==='interior'){this.exploded.set(false);this.autoRotate.set(false);this.activePart.set('interior');} }
   toggleExploded() { this.view.set('exterior'); this.exploded.update(v=>!v); }
   reset() { this.view.set('exterior');this.exploded.set(false);this.autoRotate.set(false);this.resetKey.update(v=>v+1); }
   navigate(section:string,event:MouseEvent) {
     if(event.ctrlKey||event.metaKey||event.shiftKey||event.altKey||event.button!==0)return;
     event.preventDefault();
-    const url=new URL(location.href);url.hash=section;history.pushState(null,'',url);
-    const behavior=window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth';
-    if(section)document.getElementById(section)?.scrollIntoView({behavior});else window.scrollTo({top:0,behavior});
+    const destination=section||'inicio';
+    const url=new URL(location.href);url.hash=destination;history.pushState(null,'',url);
+    const switchingPage=this.home()!==(destination==='inicio');
+    this.section.set(destination);
+    this.scrollToSection(destination,!switchingPage,true);
+  }
+  private locationSection() {
+    const hash=location.hash.slice(1);
+    if(['inicio','coleccion','configurador','experiencia'].includes(hash))return hash;
+    return new URLSearchParams(location.search).has('model')?'configurador':'inicio';
+  }
+  @HostListener('window:popstate')
+  @HostListener('window:hashchange')
+  onLocationChange() { const section=this.locationSection();this.section.set(section);this.scrollToSection(section,false); }
+  private scrollToSection(section:string,animate:boolean,focus=false) {
+    afterNextRender(()=>{
+      const behavior=animate&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches?'smooth':'instant';
+      if(section==='inicio')window.scrollTo({top:0,behavior});
+      else document.getElementById(section)?.scrollIntoView({behavior});
+      if(focus) {
+        const heading=section==='inicio'?document.getElementById('welcome-title'):document.getElementById(section)?.querySelector<HTMLElement>('h1,h2');
+        heading?.focus({preventScroll:true});
+      }
+    },{injector:this.injector});
   }
   openSummary() {
     ++this.checkoutRequestId;this.buying.set(false);clearTimeout(this.checkoutPoll);this.checkout.set(null);this.qrImage.set('');this.checkoutLink.set('');this.purchaseError.set('');

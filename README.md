@@ -25,6 +25,8 @@ Abre http://127.0.0.1:4200. Angular reenvía `/api` al servidor en el puerto 808
 
 ## Experiencia disponible
 
+- Página de inicio con bienvenida, imágenes transparentes y acceso directo al catálogo. El menú permite volver a Inicio conservando la selección; los enlaces de configuración y pedido siguen abriendo su vista directamente. El código del visor 3D se descarga al entrar al showroom.
+
 - BMW M4 Competition, BMW 330i E46, BMW M2 G87, BMW M3 E92, X6 xDrive40i y M4 F82 con archivos GLB independientes, rotación 360° con ratón, gestos o flechas; zoom con rueda o +/−. Los modelos se cargan al seleccionarlos.
 - Iluminación de estudio generada localmente, pintura con barniz y microtextura, cristales con transmisión física y sombras de contacto proyectadas desde la geometría. Se conservan las texturas originales de carbono, neumáticos y detalles de las ruedas. El realismo sigue limitado por la malla y las texturas del modelo de origen.
 - Cámara interior desde el puesto del conductor, con campo de visión de 82°. Arrastra con ratón o dedo para mirar alrededor sin desplazar la cámara fuera del asiento. También funcionan las cuatro flechas; + / − ajustan el ángulo entre 60° y 95°, e Inicio centra la mirada. La tapicería conserva su color al cambiar de dirección.
