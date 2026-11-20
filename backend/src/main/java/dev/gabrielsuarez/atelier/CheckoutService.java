@@ -51,6 +51,7 @@ public class CheckoutService {
     public View get(UUID id) {
         CheckoutSession c=checkouts.findById(id).orElseThrow(()->error(HttpStatus.NOT_FOUND,"No encontramos este enlace de compra."));
         if(c.orderId==null && !c.expiresAt.isAfter(Instant.now()))throw expired();
+        if(c.orderId==null)requireAvailableModel(c);
         return view(c);
     }
     @Transactional
@@ -65,6 +66,7 @@ public class CheckoutService {
             throw error(HttpStatus.CONFLICT,"Este QR ya se ha utilizado para registrar un pedido.");
         }
         if(!c.expiresAt.isAfter(Instant.now()))throw expired();
+        requireAvailableModel(c);
         PurchaseOrder order=new PurchaseOrder();order.checkoutId=c.id;
         order.customerName=buyer.fullName().strip();order.age=buyer.age();order.email=buyer.email();
         order.createdAt=Instant.now();order.emailStatus=PurchaseOrder.EmailStatus.QUEUED;order.nextEmailAttempt=order.createdAt;
@@ -73,6 +75,10 @@ public class CheckoutService {
     }
     private Receipt receipt(PurchaseOrder order) {
         return new Receipt(order.reference(),order.emailStatus.name(),mail.mode(),true);
+    }
+    private void requireAvailableModel(CheckoutSession c) {
+        if(catalog.getCatalog().models().stream().noneMatch(model->model.id().equals(c.model)))
+            throw error(HttpStatus.GONE,"Este modelo ya no está disponible. Elige otro en el configurador.");
     }
     private View view(CheckoutSession c) {
         PurchaseOrder o=c.orderId==null?null:orders.findById(c.orderId).orElseThrow();

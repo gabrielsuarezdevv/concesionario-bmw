@@ -25,13 +25,13 @@ Abre http://127.0.0.1:4200. Angular reenvía `/api` al servidor en el puerto 808
 
 ## Experiencia disponible
 
-- BMW M4 Competition, BMW 330i E46, BMW M2 G87, BMW M3 E92 y BMW E36 Street con archivos GLB independientes, rotación 360° con ratón, gestos o flechas; zoom con rueda o +/−. El E46 se descarga cuando se selecciona por primera vez (unos 35 MB para el coche completo).
+- BMW M4 Competition, BMW 330i E46, BMW M2 G87, BMW M3 E92 con archivos GLB independientes, rotación 360° con ratón, gestos o flechas; zoom con rueda o +/−. El E46 se descarga cuando se selecciona por primera vez (unos 35 MB para el coche completo).
 - Iluminación de estudio generada localmente, pintura con barniz y microtextura, cristales con transmisión física y sombras de contacto proyectadas desde la geometría. Se conservan las texturas originales de carbono, neumáticos y detalles de las ruedas. El realismo sigue limitado por la malla y las texturas del modelo de origen.
 - Cámara interior desde el puesto del conductor, con campo de visión de 82°. Arrastra con ratón o dedo para mirar alrededor sin desplazar la cámara fuera del asiento. También funcionan las cuatro flechas; + / − ajustan el ángulo entre 60° y 95°, e Inicio centra la mirada. La tapicería conserva su color al cambiar de dirección.
 - Habitáculo con vinilo no metálico, mapas de detalle de cuero CC0 de Poly Haven y oclusión ambiental de corto alcance, calculada solo en la vista interior. Los cristales no participan como superficies opacas en ese cálculo. En el M4, que comparte materiales entre asientos y molduras, la máscara de tapicería se calcula una vez al cargar a partir de paneles conectados. El tinte cubre cada panel completo, incluidos bordes y reposacabezas; las costuras de UV y normales no provocan cortes de color. No se modifica la geometría ni se añaden pasadas de renderizado.
 - Despiece animado por grupos visuales: carrocería, acristalamiento, habitáculo y cuatro ruedas. Se activa manualmente desde sus controles; cambiar pintura, llantas o tapicería conserva la vista elegida.
 - Doce pinturas, dos acabados de llantas y cinco colores de tapicería: Negro, Tartufo, Silverstone, Burdeos y Azul Noche. Los dos nuevos interiores tienen un suplemento de demostración de 2.200 €. Se añaden Rojo Rubí, Naranja Cobre, Amarillo Solar, Violeta Amatista, Azul Hielo, Azul Medianoche y Plata Titanio a la paleta exterior de demostración. Los cambios son de materiales; no sustituyen geometría por piezas OEM ni garantizan disponibilidad de fábrica.
-- Catálogo de cinco modelos: M4 Competition, 330i E46, M2 G87, M3 E92 y E36 Street. i4 retirado del selector y de los presupuestos del servidor. Las configuraciones antiguas con modelos retirados vuelven al M4 al abrir la web. Las fichas, precios y opciones son de demostración; los acabados no representan un catálogo de fábrica del E46.
+- Catálogo de cuatro modelos: M4 Competition, 330i E46, M2 G87 y M3 E92. i4 retirado del selector y de los presupuestos del servidor. Las configuraciones antiguas con modelos retirados vuelven al M4 al abrir la web. Las fichas, precios y opciones son de demostración; los acabados no representan un catálogo de fábrica del E46.
 - Resumen con botón Comprar, QR para completar el pedido desde el móvil, restauración local, enlaces de configuración y descarga JSON.
 - El presupuesto y el pedido se validan en Spring Boot. Si el servidor no está disponible se puede compartir o descargar la selección, pero no confirmar una compra.
 - Navegación por teclado, diálogos nativos, avisos accesibles y respeto por movimiento reducido.
@@ -60,7 +60,7 @@ Las geometrías opacas con el mismo material se agrupan respetando sus desplazam
 
 La resolución se limita a DPR 1,5 y aproximadamente 1,2 millones de píxeles, baja temporalmente durante el movimiento y se ajusta más si los fotogramas siguen siendo lentos. La resolución de reposo se recupera al detenerse. La refracción usa una captura reducida; la oclusión del habitáculo se restaura al finalizar el desplazamiento de cámara. No se simplifican las mallas ni se sustituyen los interiores.
 
-En desarrollo, añade `viewerStats=1` a la URL para mostrar FPS, llamadas de dibujo, resolución y un contador de fotogramas. El contador debe dejar de aumentar en reposo; la compilación de producción no muestra este diagnóstico. Las llamadas reflejan el último render de Three.js; los pases del compositor interior tienen sus propias estadísticas. En la prueba local del E36, el exterior pasó de 473 a 239 llamadas con la agrupación por movimiento y a 161 con la representación ensamblada. Son medidas de esa escena y cámara, no una garantía de FPS en otros equipos.
+En desarrollo, añade `viewerStats=1` a la URL para mostrar FPS, llamadas de dibujo, resolución y un contador de fotogramas. El contador debe dejar de aumentar en reposo; la compilación de producción no muestra este diagnóstico. Las llamadas reflejan el último render de Three.js; los pases del compositor interior tienen sus propias estadísticas.
 
 `npm run test:viewer` comprueba conservación de geometría/materiales, despiece, variantes de ruedas, transparencia, liberación de los buffers adicionales, adaptación de resolución y cadencia en pantallas de 30 a 240 Hz. Para el giro WebGL también es necesaria la aceleración gráfica del navegador.
 
@@ -154,7 +154,7 @@ La animación separa grupos de geometría/materiales y no representa un desmonta
 
 Proyecto independiente, sin afiliación con BMW AG. Marcas y nombres pertenecen a sus titulares.
 
-Se ha retirado la combinación anterior de carrocería GTR e interior ajeno, junto con el extractor de habitáculo. El E46 se carga desde un único GLB con créditos y licencia incorporados. Sus texturas originales tienen limitaciones: el detalle del modelo mejora el habitáculo, pero no equivale a una reconstrucción fotorrealista.
+El E46 se carga desde un único GLB con créditos y licencia incorporados. Sus texturas originales tienen limitaciones: no equivale a una reconstrucción fotorrealista.
 
 ## BMW M2 G87
 
@@ -162,19 +162,16 @@ Modelo completo gratuito de **Black Snow**, bajo [CC BY 4.0](https://creativecom
 
 La ficha ilustra el G87 de 2023: 460 CV, propulsión trasera y 4,1 s con cambio automático, según [BMW PressClub](https://www.press.bmwgroup.com/global/article/detail/T0404444EN/the-all-new-bmw-m2). El precio base de 96.900 € es ficticio. El recurso artístico incluye modificaciones mecánicas y no reproduce una especificación OEM exacta.
 
-## E92 y E36 Street
+## BMW M3 E92
 
-Se añaden dos coches completos de Black Snow bajo CC BY 4.0, con su propio exterior e interior:
-[M3 E92 stance](https://sketchfab.com/3d-models/bmw-m3-e92-stance-c35a14d811b042d792a6da69381f7f80) y
-[E36 Street](https://sketchfab.com/3d-models/bmw-3-series-e36-street-13d0a12ecda04317b96ce1e618300412).
-Se cargan al seleccionarlos (4,0 y 6,8 MB), con Meshopt servido desde Three.js, sin dependencias remotas.
-El adaptador conserva los atlas del habitáculo y separa los grupos del autor para el despiece manual.
-Los atributos cuantizados se convierten a flotantes antes de aplicar las transformaciones comunes:
-modificar directamente posiciones enteras normalizadas deformaría las mallas.
+Modelo completo [M3 E92 stance](https://sketchfab.com/3d-models/bmw-m3-e92-stance-c35a14d811b042d792a6da69381f7f80),
+de Black Snow, CC BY 4.0, con su propio exterior e interior. Se carga al seleccionarlo
+(4,0 MB), con Meshopt servido desde Three.js. El adaptador conserva los atlas del
+habitáculo y separa los grupos del autor para el despiece manual. Los atributos cuantizados
+se convierten a flotantes antes de aplicar las transformaciones comunes.
 
-Ambas son preparaciones modificadas, con suspensión rebajada. El E92 conserva asientos y jaula
-inspirados en el GTS; su ficha utiliza como referencia el M3 Coupé manual de 2007 (420 CV / 4,8 s),
+Es una preparación con suspensión rebajada, asientos y jaula inspirados en el GTS.
+La ficha utiliza como referencia el M3 Coupé manual de 2007 (420 CV / 4,8 s),
 [fuente BMW](https://www.press.bmwgroup.com/global/article/attachment/T0137039EN/208331).
-El E36 se identifica como E36 Street, sin atribuirle una variante de motor no verificada: potencia y
-aceleración se muestran como N/D. Los precios base de 58.000 € y 28.000 € son ficticios de demostración.
-Créditos, origen de las copias optimizadas y cambios: [atribución](frontend/public/models/ATTRIBUTION.md).
+El precio base de 58.000 € es ficticio de demostración.
+[Atribución y cambios](frontend/public/models/ATTRIBUTION.md).

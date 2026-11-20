@@ -74,6 +74,14 @@ class CheckoutApiTest {
         mvc.perform(get("/api/checkouts/"+UUID.randomUUID())).andExpect(status().isNotFound());
         mvc.perform(get("/api/checkouts/not-a-token")).andExpect(status().isBadRequest());assertEquals(0,orders.count());
     }
+    @Test void rejectsOpenQrForRetiredModelWithoutCreatingOrder() throws Exception {
+        UUID id=UUID.fromString(create().get("id").asText());
+        CheckoutSession c=checkouts.findById(id).orElseThrow();c.model="retired-model";checkouts.saveAndFlush(c);
+        mvc.perform(get("/api/checkouts/"+id)).andExpect(status().isGone());
+        mvc.perform(post("/api/checkouts/"+id+"/orders").contentType(MediaType.APPLICATION_JSON).content(buyer))
+            .andExpect(status().isGone());
+        assertEquals(0,orders.count());
+    }
     @Test void preparesActualMimeConfirmationInPreviewMode() throws Exception {
         String id=create().get("id").asText();
         mvc.perform(post("/api/checkouts/"+id+"/orders").contentType(MediaType.APPLICATION_JSON).content(buyer)).andExpect(status().isOk());

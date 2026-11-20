@@ -16,20 +16,19 @@ class AtelierApiTest {
     @Autowired MockMvc mvc;
     @Autowired ObjectMapper json;
     private final String selection = "{\"model\":\"m4\",\"paint\":\"green\",\"wheels\":\"forged\",\"interior\":\"cognac\",\"total\":1}";
-    @Test void offersFiveModelsAndRejectsRetiredModels() throws Exception {
+    @Test void offersFourModelsAndRejectsRetiredModels() throws Exception {
         mvc.perform(get("/api/catalog")).andExpect(status().isOk())
-            .andExpect(jsonPath("$.models.length()").value(5))
+            .andExpect(jsonPath("$.models.length()").value(4))
             .andExpect(jsonPath("$.models[0].id").value("m4"))
             .andExpect(jsonPath("$.models[1].id").value("e46"))
             .andExpect(jsonPath("$.models[1].name").value("330i E46"))
             .andExpect(jsonPath("$.models[2].id").value("m2"))
             .andExpect(jsonPath("$.models[2].power").value("460"))
-            .andExpect(jsonPath("$.models[3].id").value("e92"))
-            .andExpect(jsonPath("$.models[4].id").value("e36"))
-            .andExpect(jsonPath("$.models[4].power").value("N/D"));
-        for (String retired : new String[]{"i4"}) {
-            mvc.perform(post("/api/quotes").contentType(MediaType.APPLICATION_JSON).content(selection.replace("m4", retired)))
-                .andExpect(status().isBadRequest());
+            .andExpect(jsonPath("$.models[3].id").value("e92"));
+        for (String retired : new String[]{"i4","e36","gtr"}) {
+            for(String endpoint : new String[]{"/api/quotes","/api/configurations","/api/checkouts"})
+                mvc.perform(post(endpoint).contentType(MediaType.APPLICATION_JSON).content(selection.replace("m4", retired)))
+                    .andExpect(status().isBadRequest());
         }
     }
     @Test void savesAndQuotesE46UsingItsOwnBasePrice() throws Exception {
@@ -53,9 +52,9 @@ class AtelierApiTest {
             .andExpect(status().isOk()).andExpect(jsonPath("$.model").value("m2"))
             .andExpect(jsonPath("$.total").value(103000));
     }
-    @Test void savesAndQuotesBothStreetCarsWithIndependentPrices() throws Exception {
-        String[] models={"e92","e36"};
-        int[] prices={58000,28000};
+    @Test void savesAndQuotesE92WithItsOwnPrice() throws Exception {
+        String[] models={"e92"};
+        int[] prices={58000};
         for(int i=0;i<models.length;i++) {
             String request=selection.replace("m4",models[i]);
             mvc.perform(post("/api/quotes").contentType(MediaType.APPLICATION_JSON).content(request))

@@ -36,7 +36,7 @@ body paint, wheel finish and seat upholstery. Physical glass, CC0 leather detail
 materials are applied locally. Original code-generated gauge artwork and the project's BMW badge
 are projected onto the existing instrument/badge geometry. No foreign cabin meshes are added.
 
-The model is a customized E46 sedan, not an M3 or GTR. Its cabin has detailed geometry but limited
+The model is a customized E46 sedan, not an M3. Its cabin has detailed geometry but limited
 source texture detail; this is not a photorealistic or factory-accurate digital twin. The 35,000 EUR
 base price is a fictional demonstration value, not a market valuation. Visual separation of groups
 is illustrative, not a mechanically accurate disassembly.
@@ -62,28 +62,22 @@ The artistic asset includes custom mechanical components, not factory-accurate M
 The reference specification is the 2023 G87 automatic (460 hp, 4.1 s, rear-wheel drive).
 The 96,900 EUR base price is a fictional demonstration value, not a commercial offer.
 
-## BMW M3 E92 stance / BMW 3-Series E36 Street
+## BMW M3 E92 stance
 
-Both models by Black Snow (https://sketchfab.com/BlackSnow02), CC BY 4.0:
+Model by Black Snow (https://sketchfab.com/BlackSnow02), CC BY 4.0:
 https://creativecommons.org/licenses/by/4.0/
-E92 original: https://sketchfab.com/3d-models/bmw-m3-e92-stance-c35a14d811b042d792a6da69381f7f80
-E36 original: https://sketchfab.com/3d-models/bmw-3-series-e36-street-13d0a12ecda04317b96ce1e618300412
-Redistributed optimized GLBs:
+Original: https://sketchfab.com/3d-models/bmw-m3-e92-stance-c35a14d811b042d792a6da69381f7f80
+Redistributed optimized GLB:
 https://github.com/nutricionistaalmeidavh-spec/assetscarros3d/tree/3eb0f1afac277d81bca7b7f643de81915ea76965/assets
 Upstream optimization: glTF-Transform, Meshopt compression, mesh simplification and quantization.
-Each bundled GLB retains the original author, source and CC BY metadata unchanged.
-
-bmw-e36-street.glb: 6,773,788 bytes; SHA256 e40f4f4aee2e15c40a897745950d400becf3cd433afc29ffbe7cba9f1c2d9c39.
+The bundled GLB retains the original author, source and CC BY metadata unchanged.
 bmw-m3-e92.glb: 4,030,784 bytes; SHA256 fa56578d51fb6f741071de52d0d0000e84c31ac36ca6790e5104b8c467873d72.
-Runtime modifications: select one set of cabin controls/gauges and remove overlapping variants;
+Runtime changes: select one set of controls/gauges and remove overlapping variants;
 normalize the complete body and its own cabin together; dequantize attributes before baking
-transforms; configurable clear-coated paint, wheel finish and seat-leather tint preserving
-source textures; physical window glass; illustrative separation by original assembly groups.
-Both cars are customized/reduced-ride-height artist variants, not stock factory digital twins.
-The E92 contains GTS-style seats and a roll cage; the source's mechanical components are
-illustrative and do not reproduce the production M3 V8 exactly. Reference performance is
-that of the 2007 manual M3 Coupe (420 hp, 4.8 s), not a measurement of this customized car:
+transforms; configurable paint, wheel finish and seat-leather tint preserving source textures;
+physical glass; illustrative separation by original assembly groups.
+This is a customized stance variant, not a stock factory digital twin. It includes GTS-style
+seats and a roll cage. Reference performance is the 2007 manual M3 Coupe (420 hp, 4.8 s),
+not a measurement of this customized car:
 https://www.press.bmwgroup.com/global/article/attachment/T0137039EN/208331
-The E36's engine/performance cannot be established reliably from the artistic asset; show N/D
-for power and acceleration instead of assigning it an unverified M3/325i/328i specification.
-Prices (E92 58,000 EUR; E36 28,000 EUR) are fictional demonstration values, not market valuations.
+The 58,000 EUR price is a fictional demonstration value, not a market valuation.

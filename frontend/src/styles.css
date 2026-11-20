@@ -32,7 +32,7 @@
 @media(max-width:520px){.specs{grid-template-columns:repeat(2,minmax(0,1fr)) minmax(0,1.3fr);gap:10px}.specs>div{padding-right:10px}.specs strong{font-size:clamp(22px,6.5vw,28px);letter-spacing:-.6px}.specs strong small{font-size:14px;margin-left:4px}.specs>div>span{font-size:13px}.config-panel{min-width:0}.panel-price strong{font-size:38px}.swatches{gap:clamp(10px,4vw,20px)}.model-card h3{min-height:0}.model-card p{min-height:0}footer{display:grid;grid-template-columns:minmax(0,1fr);justify-items:center;text-align:center}footer p{width:100%;order:3}}
 
 /* Independent cars, with enough room for readable prices. */
-.model-grid.collection-models{grid-template-columns:repeat(3,minmax(0,1fr))}
+.model-grid.collection-models{grid-template-columns:repeat(2,minmax(0,1fr))}
 .model-grid.collection-models .card-art{height:clamp(160px,17vw,230px)}
 .model-grid.collection-models .card-bottom{flex-wrap:wrap;gap:8px 16px}
 @media(max-width:1150px){.model-grid.collection-models{grid-template-columns:repeat(2,minmax(0,1fr))}}

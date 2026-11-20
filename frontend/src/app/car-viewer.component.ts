@@ -9,7 +9,7 @@ import { CabinMaterials } from './cabin-materials';
 import { CabinRendering } from './cabin-rendering';
 import { E46Car } from './e46-car';
 import { M2Car } from './m2-car';
-import { StreetCar } from './street-car';
+import { E92Car } from './e92-car';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import { ViewerQuality } from './viewer-quality';
 import { AssembledCar } from './assembled-car';
@@ -96,11 +96,11 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
   private cabinRendering?: CabinRendering;
   private e46?: E46Car;
   private m2?: M2Car;
-  private streetCars = new Map<string, StreetCar>();
-  streetLoading = signal<Record<string, boolean>>({});
-  streetErrors = signal<Record<string, boolean>>({});
-  modelLoading() { return this.model==='e46'?this.e46Loading():this.model==='m2'?this.m2Loading():this.model==='m4'?this.loading():!!this.streetLoading()[this.model]; }
-  modelLoadError() { return this.model==='e46'?this.e46LoadError():this.model==='m2'?this.m2LoadError():!!this.streetErrors()[this.model]; }
+  private e92?: E92Car;
+  e92Loading=signal(false);
+  e92LoadError=signal(false);
+  modelLoading() { return this.model==='e46'?this.e46Loading():this.model==='m2'?this.m2Loading():this.model==='m4'?this.loading():this.e92Loading(); }
+  modelLoadError() { return this.model==='e46'?this.e46LoadError():this.model==='m2'?this.m2LoadError():this.e92LoadError(); }
 
   ngAfterViewInit() {
     try {
@@ -134,7 +134,7 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
       if(this.model==='m4')this.loadDetailedCar();
       if(this.model==='e46')this.loadE46();
       if(this.model==='m2')this.loadM2();
-      this.loadStreetCar();
+      this.loadE92();
       this.car.traverse(object=>{if(object instanceof T.Mesh)object.layers.enable(1);});
       this.camera.position.copy(this.targetPosition);
       this.controls = new OrbitControls(this.camera, this.renderer.domElement);
@@ -161,7 +161,7 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
       if(changes['model'] && this.model==='m4')this.loadDetailedCar();
       if(changes['model'] && this.model==='e46')this.loadE46();
       if(changes['model'] && this.model==='m2')this.loadM2();
-      if(changes['model'])this.loadStreetCar();
+      if(changes['model'])this.loadE92();
       this.applyInputs();
       if(changes['model'] || changes['exploded'] || changes['view'] || changes['wheels'])this.shadowDirty=true;
       if(changes['model'] || changes['view'] || changes['resetKey'] || changes['exploded'])this.moveCamera();
@@ -178,9 +178,7 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
     this.car.visible=this.model==='m4' && !this.detailed.visible;
     if(this.e46){this.e46.group.visible=this.model==='e46';if(this.e46.group.visible)this.e46.update(this.paint,this.wheels,this.exploded,this.activePart);}
     if(this.m2){this.m2.group.visible=this.model==='m2';if(this.m2.group.visible)this.m2.update(this.paint,this.wheels,this.interior,this.exploded,this.activePart);}
-    for(const [id, car] of this.streetCars) {
-      car.group.visible=this.model===id;if(car.group.visible)car.update(this.paint,this.wheels,this.interior,this.exploded,this.activePart);
-    }
+    if(this.e92){this.e92.group.visible=this.model==='e92';if(this.e92.group.visible)this.e92.update(this.paint,this.wheels,this.interior,this.exploded,this.activePart);}
     for(const material of [this.body,...this.detailedPaints]) {
       material.color.set(this.paint);
       material.metalness=this.paint==='#e8e8de'?.08:this.paint==='#a2a8a6'?.24:.65;
@@ -199,8 +197,8 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
   private moveCamera() {
     const inside=this.view==='interior';
     this.releaseInteriorLook();this.cabinLook.reset();this.lookMotionUntil=0;
-    this.targetPosition.set(...(inside?(this.model==='e46'?[.10,1.12,-.36]:this.model==='m2'?[-.22,1.08,-.38]:this.model==='e36'?[.02,1.04,-.36]:this.model==='e92'?[.02,1.06,-.38]:[-.30,1.12,-.38]):this.exploded?[7.8,4.2,8.0]:this.narrowViewport?[5.8,2.3,6.0]:[5.2,2.1,5.4]) as [number,number,number]);
-    this.targetLook.set(...(inside?(this.model==='e46'?[1,.72,-.12]:this.model==='m2'?[.8,.88,-.18]:this.model==='e36'?[.95,.81,-.12]:this.model==='e92'?[1,.83,-.12]:[.68,.85,-.10]):[0,this.exploded?1:.65,0]) as [number,number,number]);
+    this.targetPosition.set(...(inside?(this.model==='e46'?[.10,1.12,-.36]:this.model==='m2'?[-.22,1.08,-.38]:this.model==='e92'?[.02,1.06,-.38]:[-.30,1.12,-.38]):this.exploded?[7.8,4.2,8.0]:this.narrowViewport?[5.8,2.3,6.0]:[5.2,2.1,5.4]) as [number,number,number]);
+    this.targetLook.set(...(inside?(this.model==='e46'?[1,.72,-.12]:this.model==='m2'?[.8,.88,-.18]:this.model==='e92'?[1,.83,-.12]:[.68,.85,-.10]):[0,this.exploded?1:.65,0]) as [number,number,number]);
     this.camera.fov=inside?CABIN_FIELD_OF_VIEW:30;this.camera.updateProjectionMatrix();
     if(this.controls) { this.controls.enabled=!inside;this.controls.minDistance=inside?.05:4; this.controls.maxDistance=inside?2.5:12; this.controls.maxPolarAngle=inside?Math.PI:Math.PI/2-.02; this.controls.enableRotate=!inside; }
     this.movingCamera=true;
@@ -459,19 +457,17 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
       this.loading.set(false);this.applyInputs();this.shadowDirty=true;this.requestRender();
     },undefined,()=>{this.loading.set(false);this.requestRender();console.warn('Detailed M4 unavailable; using procedural concept.');});
   }
-  private loadStreetCar() {
-    const id=this.model;
-    if(id!=='e36' && id!=='e92')return;
-    if(this.streetCars.has(id) || this.streetLoading()[id] || this.streetErrors()[id])return;
-    this.streetLoading.update(state=>({...state,[id]:true}));
-    new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).load('/models/'+(id==='e36'?'bmw-e36-street.glb':'bmw-m3-e92.glb'),gltf=>{
+  private loadE92() {
+    if(this.model!=='e92'||this.e92||this.e92Loading()||this.e92LoadError())return;
+    this.e92Loading.set(true);
+    new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).load('/models/bmw-m3-e92.glb',gltf=>{
       if(this.disposed)return;
       try {
-        const car=new StreetCar(gltf.scene,id,this.paintNormal!,Math.min(8,this.renderer!.capabilities.getMaxAnisotropy()));
-        this.streetCars.set(id,car);this.scene.add(car.group);this.applyInputs();this.shadowDirty=true;this.requestRender();
-      } catch(error) { console.error('BMW model adaptation failed',error);this.streetErrors.update(state=>({...state,[id]:true})); }
-      this.streetLoading.update(state=>({...state,[id]:false}));
-    },undefined,()=>{this.streetLoading.update(state=>({...state,[id]:false}));this.streetErrors.update(state=>({...state,[id]:true}));});
+        this.e92=new E92Car(gltf.scene,this.paintNormal!,Math.min(8,this.renderer!.capabilities.getMaxAnisotropy()));
+        this.scene.add(this.e92.group);this.applyInputs();this.shadowDirty=true;this.requestRender();
+      } catch(error) {console.error('BMW model adaptation failed',error);this.e92LoadError.set(true);}
+      this.e92Loading.set(false);
+    },undefined,()=>{this.e92Loading.set(false);this.e92LoadError.set(true);});
   }
   private loadM2() {
     if(this.m2 || this.m2Loading() || this.m2LoadError())return;
@@ -503,12 +499,12 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
   private activeParts():Part[] {
     if(this.model==='e46')return this.e46?.parts??[];
     if(this.model==='m2')return this.m2?.parts??[];
-    if(this.model==='e36'||this.model==='e92')return this.streetCars.get(this.model)?.parts??[];
+    if(this.model==='e92')return this.e92?.parts??[];
     return this.detailedParts.length?this.detailedParts:this.parts;
   }
   private updateRepresentation(geometryMoving:boolean) {
     const source=this.model==='m4'?(this.detailedParts.length?this.detailed:this.car)
-      :this.model==='e46'?this.e46?.group:this.model==='m2'?this.m2?.group:this.streetCars.get(this.model)?.group;
+      :this.model==='e46'?this.e46?.group:this.model==='m2'?this.m2?.group:this.e92?.group;
     if(!source)return;
     const key=this.model+(this.model==='e46'?':'+this.wheels:'');
     if(this.assembled && this.assembledKey!==key) {
@@ -562,7 +558,7 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
     if(continuous && this.quality.beginMotion())this.applyResolution();
     if(continuous && !this.modelLoading() && this.quality.observe(interval))this.applyResolution();
     if(!continuous && this.quality.ratio!==this.quality.maximum){this.quality.restore();this.applyResolution();}
-    if(this.renderer && this.view==='interior' && (this.detailed.visible || this.e46?.group.visible || this.m2?.group.visible || this.streetCars.get(this.model)?.group.visible)) {
+    if(this.renderer && this.view==='interior' && (this.detailed.visible || this.e46?.group.visible || this.m2?.group.visible || this.e92?.group.visible)) {
       if(!this.cabinRendering) {
         this.cabinRendering=new CabinRendering(this.renderer,this.scene,this.camera);
         const {clientWidth:w,clientHeight:h}=this.stage.nativeElement;

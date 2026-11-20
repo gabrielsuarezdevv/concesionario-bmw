@@ -27,7 +27,7 @@ class OrderMailDispatcherTest {
         when(sender.createMimeMessage()).thenAnswer(invocation->new MimeMessage(Session.getInstance(new Properties())));
     }
     private PurchaseOrder order() {
-        var view=checkout.create(new ConfigurationRequest("e36","blue","sport","black"));
+        var view=checkout.create(new ConfigurationRequest("e92","blue","sport","black"));
         checkout.confirm(view.id(),new BuyerRequest("Cliente de prueba",18,"prueba@example.test"));
         return orders.findAll().getFirst();
     }
@@ -43,7 +43,7 @@ class OrderMailDispatcherTest {
         dispatcher.dispatch(order.id);
         var captured=ArgumentCaptor.forClass(MimeMessage.class);verify(sender,times(2)).send(captured.capture());
         MimeMessage message=captured.getValue();assertEquals("prueba@example.test",message.getAllRecipients()[0].toString());
-        assertTrue(message.getContent().toString().contains("E36 Street"));assertTrue(message.getContent().toString().contains("28.000"));
+        assertTrue(message.getContent().toString().contains("M3 E92"));assertTrue(message.getContent().toString().contains("58.000"));
     }
     @Test void recordsFinalDeliveryFailureWithoutCancelingPurchase() {
         PurchaseOrder order=order();order.emailAttempts=4;order.nextEmailAttempt=Instant.now().minusSeconds(1);orders.saveAndFlush(order);

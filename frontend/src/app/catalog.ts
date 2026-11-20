@@ -7,8 +7,7 @@ export const DEMO_CATALOG: Catalog = {
     { id: 'm4', name: 'M4 Competition', subtitle: 'La expresión del carácter.', price: 124500, power: '530', acceleration: '3,5', drive: 'M xDrive' },
     { id: 'e46', name: '330i E46', subtitle: 'El carácter de un clásico.', price: 35000, power: '231', acceleration: '6,5', drive: 'Trasera' },
     { id: 'm2', name: 'M2 G87', subtitle: 'Toda la esencia M. Sin filtros.', price: 96900, power: '460', acceleration: '4,1', drive: 'Trasera' },
-    { id: 'e92', name: 'M3 E92', subtitle: 'El pulso de otra generación.', price: 58000, power: '420', acceleration: '4,8', drive: 'Trasera' },
-    { id: 'e36', name: 'E36 Street', subtitle: 'Un clásico con carácter propio.', price: 28000, power: 'N/D', acceleration: 'N/D', drive: 'Trasera' }
+    { id: 'e92', name: 'M3 E92', subtitle: 'El pulso de otra generación.', price: 58000, power: '420', acceleration: '4,8', drive: 'Trasera' }
   ],
   paints: [
     { id: 'blue', name: 'Portimao Blue', hex: '#2868b2', price: 0 },
