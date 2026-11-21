@@ -25,6 +25,7 @@
       </div>
       <div class="viewer-toolbar"><div class="view-tabs" aria-label="Vista del coche"><button [class.active]="view()==='exterior' && !exploded()" (click)="setView('exterior'); exploded.set(false)"><span>◉</span> Exterior 360°</button></div><button class="rotate-button" [class.enabled]="autoRotate()" [disabled]="view()==='interior'" [attr.aria-pressed]="autoRotate()" (click)="autoRotate.set(!autoRotate())"><span>↻</span><span class="rotate-label">Giro automático</span><i></i></button></div>
       <div class="specs"><div><strong>{{car().power}}@if(car().power!=='N/D'){<small>CV</small>}</strong><span>Potencia</span></div><div><strong>{{car().acceleration}}@if(car().acceleration!=='N/D'){<small>s</small>}</strong><span>0–100 km/h</span></div><div><strong>{{car().drive}}</strong><span>Tracción</span></div><p>La precisión se ve.<br>La emoción se siente.</p></div>
+      <technical-sheet [modelId]="model()" />
     </div>
 
     <aside class="config-panel" aria-label="Personaliza tu BMW">

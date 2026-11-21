@@ -8,8 +8,9 @@ import { OrderCheckoutComponent } from './order-checkout.component';
 import { CarViewerComponent } from './car-viewer.component';
 import { Catalog, DEMO_CATALOG, Option } from './catalog';
 import { HomeComponent } from './home.component';
+import { TechnicalSheetComponent } from './technical-sheet.component';
 
-@Component({ selector: 'app-root', standalone: true, imports: [CarViewerComponent, CurrencyPipe, OrderCheckoutComponent, HomeComponent], templateUrl: './app.component.html' })
+@Component({ selector: 'app-root', standalone: true, imports: [CarViewerComponent, CurrencyPipe, OrderCheckoutComponent, HomeComponent, TechnicalSheetComponent], templateUrl: './app.component.html' })
 export class AppComponent implements OnDestroy {
   readonly checkoutToken = new URLSearchParams(location.search).has('checkout') ? new URLSearchParams(location.search).get('checkout')! : null;
   checkout=signal<CheckoutView|null>(null); qrImage=signal(''); checkoutLink=signal(''); buying=signal(false); purchaseError=signal('');

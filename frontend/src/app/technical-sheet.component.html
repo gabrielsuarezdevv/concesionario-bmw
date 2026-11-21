@@ -1,0 +1,20 @@
+@if(specification(); as sheet) {
+  <section class="technical-sheet" aria-labelledby="technical-title">
+    <div class="technical-heading">
+      <div><h2 id="technical-title">Ficha técnica</h2><p>{{sheet.reference}}</p></div>
+      <span class="generation">{{sheet.generation}}</span>
+    </div>
+    <dl class="technical-grid">
+      <div><dt>Motor</dt><dd>{{sheet.engine}}</dd></div>
+      <div><dt>Cilindrada</dt><dd>{{sheet.displacement}}</dd></div>
+      <div><dt>Par máximo</dt><dd>{{sheet.torque}}</dd></div>
+      <div><dt>Cambio</dt><dd>{{sheet.transmission}}</dd></div>
+      <div><dt>Carrocería</dt><dd>{{sheet.body}}</dd></div>
+      <div><dt>Velocidad máxima</dt><dd>{{sheet.topSpeed}}</dd></div>
+    </dl>
+    <div class="technical-foot">
+      <p>Datos de serie de la versión indicada. El modelo 3D puede incluir modificaciones.</p>
+      <div class="technical-sources" aria-label="Fuentes de la ficha técnica">@for(source of sheet.sources; track source.url){<a [href]="source.url" target="_blank" rel="noopener noreferrer">{{source.name}}</a>}</div>
+    </div>
+  </section>
+}
