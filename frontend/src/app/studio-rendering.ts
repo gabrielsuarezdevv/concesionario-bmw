@@ -2,11 +2,12 @@ import * as T from 'three';
 import { FullScreenQuad } from 'three/addons/postprocessing/Pass.js';
 import { HorizontalBlurShader } from 'three/addons/shaders/HorizontalBlurShader.js';
 import { VerticalBlurShader } from 'three/addons/shaders/VerticalBlurShader.js';
+import type { ViewerEnvironment } from './viewer-environment-options';
 
 /** Local HDR light cards: long reflections reveal the curvature of the bodywork. */
-export function createStudioEnvironment(renderer: T.WebGLRenderer): T.WebGLRenderTarget {
+export function createStudioEnvironment(renderer: T.WebGLRenderer, environment:ViewerEnvironment='studio'): T.WebGLRenderTarget {
   const studio = new T.Scene();
-  studio.background = new T.Color('#30343b');
+  studio.background = new T.Color(environment==='day'?'#9aaeba':environment==='night'?'#060e1d':'#30343b');
   const panelGeometry = new T.PlaneGeometry();
   const materials: T.MeshBasicMaterial[] = [];
   const panel = (position: number[], size: number[], intensity: number, color = '#ffffff') => {
@@ -18,17 +19,25 @@ export function createStudioEnvironment(renderer: T.WebGLRenderer): T.WebGLRende
     mesh.lookAt(0, 0, 0);
     studio.add(mesh);
   };
-  panel([0, 5, 1], [7, 1.4], 5);
-  panel([-3, 3, -4], [6, .65], 6);
-  panel([1, 2, 5], [6, 2.5], 2.5);
-  panel([5, 1.5, -1], [2, 3], 3);
-  panel([-5, 1, 2], [2, 2], 1.5, '#d6e5ff');
+  if(environment==='day') {
+    panel([-3,6,4],[3,3],7,'#fff2d9');panel([0,5,0],[10,8],2.4,'#dcefff');
+    panel([3,2,-4],[7,3],1.1,'#dceaff');panel([-5,1,2],[5,2],.65,'#b8cbd9');
+  } else if(environment==='night') {
+    panel([0,5,1],[7,.7],3.8,'#dcecff');panel([-3,3,-4],[6,.4],4,'#41adff');
+    panel([1,2,5],[5,1.2],1.6,'#b0cbef');panel([5,1.5,-1],[1.5,3],1.6,'#e8f0ff');
+  } else {
+    panel([0, 5, 1], [7, 1.4], 5);
+    panel([-3, 3, -4], [6, .65], 6);
+    panel([1, 2, 5], [6, 2.5], 2.5);
+    panel([5, 1.5, -1], [2, 3], 3);
+    panel([-5, 1, 2], [2, 2], 1.5, '#d6e5ff');
+  }
   const generator = new T.PMREMGenerator(renderer);
-  const environment = generator.fromScene(studio, .012, .1, 30, { size: 512 });
+  const target = generator.fromScene(studio, .012, .1, 30, { size: environment==='studio'?512:256 });
   generator.dispose();
   panelGeometry.dispose();
   materials.forEach(material => material.dispose());
-  return environment;
+  return target;
 }
 
 /** Soft contact occlusion, projected from the actual underside of the vehicle. */

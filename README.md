@@ -25,6 +25,8 @@ Abre http://127.0.0.1:4200. Angular reenvía `/api` al servidor en el puerto 808
 
 ## Experiencia disponible
 
+- Tres ambientes del visor: Estudio, Día y Noche. Cada uno cambia fondo, suelo, luces y reflejos; el interior nocturno conserva luz de apoyo. Los mapas de reflejos se generan localmente bajo demanda y se reutilizan al cambiar de ambiente. El escenario se mantiene al elegir otro coche y no modifica su configuración ni su precio.
+
 - Página de inicio con bienvenida, imágenes transparentes y acceso directo al catálogo. El menú permite volver a Inicio conservando la selección; los enlaces de configuración y pedido siguen abriendo su vista directamente. El código del visor 3D se descarga al entrar al showroom.
 
 - BMW M4 Competition, BMW 330i E46, BMW M2 G87, BMW M3 E92, X6 xDrive40i y M4 F82 con archivos GLB independientes, rotación 360° con ratón, gestos o flechas; zoom con rueda o +/−. Los modelos se cargan al seleccionarlos.
