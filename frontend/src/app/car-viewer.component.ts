@@ -121,7 +121,6 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
       this.renderer.shadowMap.enabled = true;
       this.renderer.shadowMap.type = T.PCFSoftShadowMap;
       this.renderer.shadowMap.autoUpdate = false;
-      this.renderer.toneMapping = T.ACESFilmicToneMapping;
       this.renderer.toneMappingExposure = 1.05;
       this.renderer.outputColorSpace = T.SRGBColorSpace;
       this.stage.nativeElement.appendChild(this.renderer.domElement);

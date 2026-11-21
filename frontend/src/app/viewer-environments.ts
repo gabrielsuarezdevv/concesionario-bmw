@@ -5,9 +5,9 @@ export type { ViewerEnvironment } from './viewer-environment-options';
 
 /** Three lightweight lighting rigs. Reflection maps are generated once per selected environment. */
 export class ViewerEnvironmentRig {
-  private readonly hemisphere=new T.HemisphereLight('#e1e9f4','#141820',.55);
+  private readonly hemisphere=new T.HemisphereLight('#ffffff','#141414',.55);
   private readonly key=new T.DirectionalLight('#ffffff',1.7);
-  private readonly rim=new T.DirectionalLight('#dceaff',.8);
+  private readonly rim=new T.DirectionalLight('#ffffff',.8);
   private readonly stage=new T.Group();
   private readonly studioFloor=new T.Mesh(new T.CircleGeometry(5.5,96),new T.ShadowMaterial({color:'#000000',opacity:.2}));
   private readonly outdoorFloor=new T.Mesh(new T.CircleGeometry(50,96),new T.MeshStandardMaterial({color:'#c7d5df',roughness:.85,metalness:.05}));
@@ -19,6 +19,8 @@ export class ViewerEnvironmentRig {
 
   constructor(private readonly scene:T.Scene,private readonly renderer:T.WebGLRenderer,
     private readonly makeEnvironment:(renderer:T.WebGLRenderer,id:ViewerEnvironment)=>T.WebGLRenderTarget=createStudioEnvironment) {
+    // Product rendering: preserve paint hues instead of the ACES cinematic colour transform.
+    this.renderer.toneMapping=T.NeutralToneMapping;
     this.key.position.set(2,5,4);this.key.castShadow=true;
     this.key.shadow.mapSize.set(2048,2048);
     Object.assign(this.key.shadow.camera,{left:-4,right:4,top:4,bottom:-4,near:.1,far:15});
@@ -44,24 +46,24 @@ export class ViewerEnvironmentRig {
     this.studioFloor.visible=id==='studio';this.outdoorFloor.visible=id!=='studio';this.nightLines.visible=id==='night';
     if(id==='studio') {
       this.scene.background=interior?new T.Color('#8b929b'):null;this.scene.fog=null;
-      this.scene.environmentIntensity=1.15;this.renderer.toneMappingExposure=1.05;
-      this.hemisphere.color.set('#e1e9f4');this.hemisphere.groundColor.set('#141820');this.hemisphere.intensity=.55;
+      this.scene.environmentIntensity=1;this.renderer.toneMappingExposure=1;
+      this.hemisphere.color.set('#ffffff');this.hemisphere.groundColor.set('#141414');this.hemisphere.intensity=.55;
       this.key.color.set('#ffffff');this.key.intensity=1.7;this.key.position.set(2,5,4);
-      this.rim.color.set('#dceaff');this.rim.intensity=.8;this.ring.material.color.set('#3975ab');this.ring.material.opacity=.1;
+      this.rim.color.set('#ffffff');this.rim.intensity=.7;this.ring.material.color.set('#3975ab');this.ring.material.opacity=.1;
     } else if(id==='day') {
       this.scene.background=this.sky(id);this.scene.fog=new T.Fog('#d8e5ed',18,60);
-      this.scene.environmentIntensity=interior?1.2:1.05;this.renderer.toneMappingExposure=1.08;
-      this.hemisphere.color.set('#c8e8ff');this.hemisphere.groundColor.set('#8e9eac');this.hemisphere.intensity=1.05;
-      this.key.color.set('#fff1d9');this.key.intensity=2.6;this.key.position.set(-3,6,4);
-      this.rim.color.set('#cbe6ff');this.rim.intensity=.45;
+      this.scene.environmentIntensity=interior?1.05:.85;this.renderer.toneMappingExposure=1;
+      this.hemisphere.color.set('#ffffff');this.hemisphere.groundColor.set('#8e8e8e');this.hemisphere.intensity=.75;
+      this.key.color.set('#ffffff');this.key.intensity=1.8;this.key.position.set(-3,6,4);
+      this.rim.color.set('#ffffff');this.rim.intensity=.4;
       this.outdoorFloor.material.color.set('#c9d6df');this.outdoorFloor.material.roughness=.88;
       this.ring.material.color.set('#7097af');this.ring.material.opacity=.16;
     } else {
       this.scene.background=this.sky(id);this.scene.fog=new T.Fog('#0b1524',13,45);
-      this.scene.environmentIntensity=interior?1.35:.82;this.renderer.toneMappingExposure=interior?1.2:.95;
-      this.hemisphere.color.set('#9dbce8');this.hemisphere.groundColor.set(interior?'#33455d':'#111a2d');this.hemisphere.intensity=interior?1.05:.38;
-      this.key.color.set('#d7e7ff');this.key.intensity=interior?1.6:1.3;this.key.position.set(2,5,4);
-      this.rim.color.set('#4bbcff');this.rim.intensity=1.5;
+      this.scene.environmentIntensity=interior?1.2:.82;this.renderer.toneMappingExposure=interior?1.05:.95;
+      this.hemisphere.color.set('#ffffff');this.hemisphere.groundColor.set(interior?'#3a3a3a':'#171717');this.hemisphere.intensity=interior?1.05:.38;
+      this.key.color.set('#ffffff');this.key.intensity=interior?1.6:1.3;this.key.position.set(2,5,4);
+      this.rim.color.set('#ffffff');this.rim.intensity=.9;
       this.outdoorFloor.material.color.set('#111d30');this.outdoorFloor.material.roughness=.72;
       this.ring.material.color.set('#168cdb');this.ring.material.opacity=.7;
     }
