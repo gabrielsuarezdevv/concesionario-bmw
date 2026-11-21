@@ -1,0 +1,44 @@
+<header class="order-header"><a href="/" class="brand" aria-label="BMW Atelier, inicio"><img class="roundel" src="brand/bmw-logo.svg" width="49" height="49" alt=""><span class="brand-name">BMW <b>ATELIER</b></span></a><span>Tu próximo capítulo.</span></header>
+<main class="order-page">
+  @if(loading()) {
+    <section class="order-state" aria-live="polite"><p class="overline">HECHO POR TI</p><h1>Preparando tu pedido…</h1><p>Estamos recuperando la configuración de tu BMW.</p></section>
+  } @else if(!checkout()) {
+    <section class="order-state"><p class="overline">TU BMW ATELIER</p><h1>Este enlace no está disponible.</h1><p role="alert">{{error()}}</p><button class="primary-button" (click)="load()">Volver a intentarlo</button><a href="/">Volver al showroom</a></section>
+  } @else {
+    @let order=checkout()!;
+    <div class="order-layout">
+      <aside class="order-car" aria-label="Resumen del coche elegido">
+        <p class="overline">DISEÑADO POR TI</p><h2>BMW {{order.configuration.modelName}}</h2>
+        <img class="order-preview" [src]="'models/previews/'+order.configuration.model+'.png'" [alt]="'BMW '+order.configuration.modelName" width="500" height="270">
+        <dl><div><dt>Pintura</dt><dd>{{order.configuration.paintName}}</dd></div><div><dt>Llantas</dt><dd>{{order.configuration.wheelsName}}</dd></div><div><dt>Interior</dt><dd>{{order.configuration.interiorName}}</dd></div></dl>
+        <div class="order-total"><span>Total de referencia</span><strong>{{order.configuration.total | currency:'EUR':'symbol':'1.0-0'}}</strong></div>
+        <p class="order-fineprint">Pedido de demostración. No se realiza ningún cobro.</p>
+      </aside>
+      <section class="order-details">
+        @if(order.state==='COMPLETED') {
+          <div class="order-confirmation" aria-live="polite">
+            <span class="order-check" aria-hidden="true">✓</span>
+            <p class="overline">TU BMW, UN PASO MÁS CERCA</p><h1>Pedido registrado.</h1>
+            <p>Esta es la referencia de tu pedido:</p><strong class="order-reference">{{order.reference}}</strong>
+            <p>{{emailMessage(order.emailStatus)}}</p>
+            @if(order.emailStatus==='SENT' && form.controls.email.value){<p class="order-recipient">Enviado a {{form.controls.email.value}}.</p>}
+            <a class="primary-button" href="/">Volver al showroom</a>
+          </div>
+        } @else {
+          <p class="overline">EL ÚLTIMO DETALLE LO PONES TÚ</p><h1>Ya casi es tuyo.</h1><p class="order-intro">Completa tus datos para registrar el pedido. Enviaremos la confirmación al correo que indiques.</p>
+          <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+            <div class="order-field"><label for="buyer-name">Nombre completo</label><input id="buyer-name" type="text" formControlName="fullName" autocomplete="name" minlength="2" maxlength="120" required [attr.aria-invalid]="!!fieldError('fullName')" aria-describedby="name-error">@if(fieldError('fullName')){<small id="name-error" class="field-error" role="alert">{{fieldError('fullName')}}</small>}</div>
+            <div class="order-field"><label for="buyer-age">Edad</label><input id="buyer-age" type="number" formControlName="age" min="18" max="120" step="1" inputmode="numeric" required [attr.aria-invalid]="!!fieldError('age')" aria-describedby="age-help age-error"><small id="age-help">Debes tener 18 años o más para realizar el pedido.</small>@if(fieldError('age')){<small id="age-error" class="field-error" role="alert">{{fieldError('age')}}</small>}</div>
+            <div class="order-field"><label for="buyer-email">Correo electrónico</label><input id="buyer-email" type="email" formControlName="email" autocomplete="email" maxlength="254" required [attr.aria-invalid]="!!fieldError('email')" aria-describedby="email-help email-error"><small id="email-help">Aquí recibirás la confirmación con el resumen de tu BMW.</small>@if(fieldError('email')){<small id="email-error" class="field-error" role="alert">{{fieldError('email')}}</small>}</div>
+            @if(error()){<p class="order-error" role="alert">{{error()}}</p>}
+            <button class="primary-button" type="submit" [disabled]="submitting()">{{submitting()?'Registrando pedido…':'Confirmar pedido'}}</button>
+            <p class="order-fineprint">Usaremos tu correo para confirmar este pedido. No se solicitan datos de pago.</p>
+            @if(order.deliveryMode==='PREVIEW'){<p class="order-demo-note">Modo de demostración: la confirmación se prepara sin enviar correos reales.</p>}
+            <p class="order-expiry">Este enlace es válido hasta las {{order.expiresAt | date:'HH:mm'}}.</p>
+          </form>
+        }
+      </section>
+    </div>
+  }
+</main>
+<div class="order-footer">BMW Atelier · Proyecto independiente de demostración.</div>

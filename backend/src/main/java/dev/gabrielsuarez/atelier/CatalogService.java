@@ -13,12 +13,20 @@ public class CatalogService {
     public record Quote(int basePrice, int optionsPrice, int total, String currency, boolean demonstration) {}
     private final Catalog catalog = new Catalog(
         List.of(new Car("m4", "M4 Competition", "La expresión del carácter.", 124500, "530", "3,5", "M xDrive"),
-            new Car("m2", "M2 Coupé", "Instinto en estado puro.", 94700, "480", "4,0", "Propulsión"),
-            new Car("i4", "i4 M50", "La energía de una nueva era.", 81900, "544", "3,9", "Eléctrico")),
+            new Car("e46", "330i E46", "El carácter de un clásico.", 35000, "231", "6,5", "Trasera"),
+            new Car("m2", "M2 G87", "Toda la esencia M. Sin filtros.", 96900, "460", "4,1", "Trasera"),
+            new Car("e92", "M3 E92", "El pulso de otra generación.", 58000, "420", "4,8", "Trasera"),
+            new Car("x6", "X6 xDrive40i", "Presencia sin límites.", 85000, "N/D", "N/D", "xDrive"),
+            new Car("f82", "M4 F82", "Una silueta que marca época.", 65000, "N/D", "N/D", "Trasera")),
         List.of(new Option("blue", "Portimao Blue", 0, "#2868b2"), new Option("grey", "Brooklyn Grey", 1100, "#a2a8a6"),
-            new Option("black", "Sapphire Black", 1100, "#202326"), new Option("green", "Isle of Man Green", 1900, "#276b5c"), new Option("white", "Alpine White", 0, "#e8e8de")),
+            new Option("black", "Sapphire Black", 1100, "#202326"), new Option("green", "Isle of Man Green", 1900, "#276b5c"), new Option("white", "Alpine White", 0, "#e8e8de"),
+            new Option("red", "Rojo Rubí", 1900, "#b51f32"), new Option("orange", "Naranja Cobre", 1100, "#d26628"),
+            new Option("yellow", "Amarillo Solar", 1900, "#e0bd35"), new Option("purple", "Violeta Amatista", 1900, "#684091"),
+            new Option("iceblue", "Azul Hielo", 1100, "#8bbbd2"), new Option("midnight", "Azul Medianoche", 1900, "#182f59"),
+            new Option("silver", "Plata Titanio", 1100, "#bfc4cb")),
         List.of(new Option("sport", "M · Acabado Plata", 0, null), new Option("forged", "M · Acabado Jet Black", 2400, null)),
-        List.of(new Option("black", "Merino · Negro", 0, "#252827"), new Option("cognac", "Merino · Tartufo", 1800, "#9a5730"), new Option("ivory", "Merino · Silverstone", 2200, "#c9c5b5")));
+        List.of(new Option("black", "Merino · Negro", 0, "#252827"), new Option("cognac", "Merino · Tartufo", 1800, "#9a5730"), new Option("ivory", "Merino · Silverstone", 2200, "#c9c5b5"),
+            new Option("burgundy", "Merino · Burdeos", 2200, "#8b3046"), new Option("navy", "Merino · Azul Noche", 2200, "#315a82")));
     public Catalog getCatalog() { return catalog; }
     public Quote quote(ConfigurationRequest request) {
         Car model = catalog.models().stream().filter(m -> m.id().equals(request.model())).findFirst().orElseThrow(CatalogService::invalid);

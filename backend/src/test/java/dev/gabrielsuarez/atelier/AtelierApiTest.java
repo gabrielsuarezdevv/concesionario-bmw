@@ -16,6 +16,59 @@ class AtelierApiTest {
     @Autowired MockMvc mvc;
     @Autowired ObjectMapper json;
     private final String selection = "{\"model\":\"m4\",\"paint\":\"green\",\"wheels\":\"forged\",\"interior\":\"cognac\",\"total\":1}";
+    @Test void offersSixModelsAndRejectsRetiredModels() throws Exception {
+        mvc.perform(get("/api/catalog")).andExpect(status().isOk())
+            .andExpect(jsonPath("$.models.length()").value(6))
+            .andExpect(jsonPath("$.models[0].id").value("m4"))
+            .andExpect(jsonPath("$.models[1].id").value("e46"))
+            .andExpect(jsonPath("$.models[1].name").value("330i E46"))
+            .andExpect(jsonPath("$.models[2].id").value("m2"))
+            .andExpect(jsonPath("$.models[2].power").value("460"))
+            .andExpect(jsonPath("$.models[3].id").value("e92"))
+            .andExpect(jsonPath("$.models[4].id").value("x6"))
+            .andExpect(jsonPath("$.models[5].id").value("f82"));
+        for (String retired : new String[]{"i4","e36","gtr","e34","1m"}) {
+            for(String endpoint : new String[]{"/api/quotes","/api/configurations","/api/checkouts"})
+                mvc.perform(post(endpoint).contentType(MediaType.APPLICATION_JSON).content(selection.replace("m4", retired)))
+                    .andExpect(status().isBadRequest());
+        }
+    }
+    @Test void savesAndQuotesE46UsingItsOwnBasePrice() throws Exception {
+        String e46 = selection.replace("m4", "e46");
+        mvc.perform(post("/api/quotes").contentType(MediaType.APPLICATION_JSON).content(e46))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.total").value(41100));
+        String saved = mvc.perform(post("/api/configurations").contentType(MediaType.APPLICATION_JSON).content(e46))
+            .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();
+        mvc.perform(get("/api/configurations/" + json.readTree(saved).get("id").asText()))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.model").value("e46"))
+            .andExpect(jsonPath("$.total").value(41100));
+    }
+    @Test void savesAndQuotesM2UsingItsOwnBasePrice() throws Exception {
+        String m2 = selection.replace("m4", "m2");
+        mvc.perform(post("/api/quotes").contentType(MediaType.APPLICATION_JSON).content(m2))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.basePrice").value(96900))
+            .andExpect(jsonPath("$.total").value(103000));
+        String saved = mvc.perform(post("/api/configurations").contentType(MediaType.APPLICATION_JSON).content(m2))
+            .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();
+        mvc.perform(get("/api/configurations/" + json.readTree(saved).get("id").asText()))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.model").value("m2"))
+            .andExpect(jsonPath("$.total").value(103000));
+    }
+    @Test void savesAndQuotesAddedCarsWithTheirOwnPrices() throws Exception {
+        String[] models={"e92","x6","f82"};
+        int[] prices={58000,85000,65000};
+        for(int i=0;i<models.length;i++) {
+            String request=selection.replace("m4",models[i]);
+            mvc.perform(post("/api/quotes").contentType(MediaType.APPLICATION_JSON).content(request))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.basePrice").value(prices[i]))
+                .andExpect(jsonPath("$.total").value(prices[i]+6100));
+            String saved=mvc.perform(post("/api/configurations").contentType(MediaType.APPLICATION_JSON).content(request))
+                .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();
+            mvc.perform(get("/api/configurations/"+json.readTree(saved).get("id").asText()))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.model").value(models[i]))
+                .andExpect(jsonPath("$.total").value(prices[i]+6100));
+        }
+    }
     @Test void computesPriceOnServerIgnoringClientTotal() throws Exception {
         mvc.perform(post("/api/quotes").contentType(MediaType.APPLICATION_JSON).content(selection))
             .andExpect(status().isOk()).andExpect(jsonPath("$.total").value(130600)).andExpect(jsonPath("$.demonstration").value(true));
