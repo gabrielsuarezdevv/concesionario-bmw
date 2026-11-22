@@ -34,7 +34,7 @@ export class AppComponent implements OnDestroy {
   model=signal('m4'); paint=signal('blue'); wheels=signal('sport'); interior=signal('black');
   activePart=signal('paint'); view=signal('exterior'); exploded=signal(false); autoRotate=signal(false); resetKey=signal(0);
   readonly environments=VIEWER_ENVIRONMENTS;
-  environment=signal<ViewerEnvironment>('studio');
+  environment=signal<ViewerEnvironment>('day');
   apiOnline=signal(false); toast=signal(''); saved=signal(false); help=signal(false);
   private toastTimer?: ReturnType<typeof setTimeout>;
   car=computed(()=>this.catalog().models.find(m=>m.id===this.model())!);

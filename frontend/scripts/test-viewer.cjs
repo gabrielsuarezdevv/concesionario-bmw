@@ -54,12 +54,10 @@ test('environment changes reuse reflection maps and preserve the configured car 
   const rig=new ViewerEnvironmentRig(scene,renderer,(_,id)=>{created.push(id);return new T.WebGLRenderTarget(4,4);});
   const lights=scene.children.filter(node=>node.isLight);
   assert.equal(lights.length,3);
-  rig.apply('studio',false);const studio=scene.environment;assert.equal(scene.background,null);
   rig.apply('day',false);const day=scene.environment;assert.ok(scene.background.isDataTexture);assert.ok(scene.fog);
   rig.apply('night',false);assert.notEqual(scene.environment,day);assert.ok(renderer.toneMappingExposure<1);
-  rig.apply('studio',false);assert.equal(scene.environment,studio);assert.equal(scene.fog,null);assert.equal(scene.background,null);
   rig.apply('day',false);assert.equal(scene.environment,day);assert.equal(rig.apply('day',false),false);
-  assert.deepEqual(created,['studio','day','night']);assert.deepEqual(scene.children.filter(node=>node.isLight),lights);
+  assert.deepEqual(created,['day','night']);assert.deepEqual(scene.children.filter(node=>node.isLight),lights);
   assert.deepEqual(car.position.toArray(),[1,2,3]);assert.equal(car.material.color.getHexString(),'684091');
   rig.dispose();assert.deepEqual(scene.children,[car]);car.geometry.dispose();car.material.dispose();
 });
@@ -71,16 +69,16 @@ test('night cabins remain lit and environment textures are released on disposal'
   rig.apply('night',false);const outside=scene.environmentIntensity,exposure=renderer.toneMappingExposure;skies.push(scene.background);
   rig.apply('night',true);assert.ok(scene.environmentIntensity>outside);assert.ok(renderer.toneMappingExposure>exposure);assert.equal(targets.length,1);
   rig.apply('day',true);skies.push(scene.background);
-  rig.apply('studio',true);assert.ok(scene.background.isColor);assert.equal(renderer.toneMappingExposure,1);
+  assert.ok(scene.background.isDataTexture);assert.equal(renderer.toneMappingExposure,1);
   for(const texture of skies)texture.addEventListener('dispose',()=>releasedSkies++);
-  rig.dispose();assert.equal(releasedTargets,3);assert.equal(releasedSkies,2);assert.equal(scene.environment,null);assert.equal(scene.background,null);
+  rig.dispose();assert.equal(releasedTargets,2);assert.equal(releasedSkies,2);assert.equal(scene.environment,null);assert.equal(scene.background,null);
 });
 
 test('all environments use neutral product tone mapping and achromatic light on paint',()=>{
   const scene=new T.Scene(),renderer={toneMappingExposure:1,toneMapping:T.ACESFilmicToneMapping};
   const rig=new ViewerEnvironmentRig(scene,renderer,()=>new T.WebGLRenderTarget(4,4));
   const neutral=color=>{assert.ok(Math.abs(color.r-color.g)<1e-9);assert.ok(Math.abs(color.g-color.b)<1e-9);};
-  for(const environment of ['studio','day','night'])for(const interior of [false,true]) {
+  for(const environment of ['day','night'])for(const interior of [false,true]) {
     rig.apply(environment,interior);
     assert.equal(renderer.toneMapping,T.NeutralToneMapping);
     assert.ok(renderer.toneMappingExposure<=1.05);

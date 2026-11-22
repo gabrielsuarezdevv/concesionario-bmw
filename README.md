@@ -25,7 +25,7 @@ Abre http://127.0.0.1:4200. Angular reenvía `/api` al servidor en el puerto 808
 
 ## Experiencia disponible
 
-- Tres ambientes del visor: Estudio, Día y Noche. Cada uno cambia fondo, suelo, luces y reflejos; el interior nocturno conserva luz de apoyo. Los mapas de reflejos se generan localmente bajo demanda y se reutilizan al cambiar de ambiente. El escenario se mantiene al elegir otro coche y no modifica su configuración ni su precio.
+- Dos ambientes del visor: Día (inicial) y Noche. Cada uno cambia fondo, suelo, luces y reflejos; el interior nocturno conserva luz de apoyo. Los mapas de reflejos se generan localmente bajo demanda y se reutilizan al cambiar de ambiente. El escenario se mantiene al elegir otro coche y no modifica su configuración ni su precio.
 - La luz directa y los mapas de reflejos son neutros para conservar el matiz de la pintura. Se usa Neutral Tone Mapping y exposición contenida para evitar que los colores saturados se aclaren hacia tonos pastel. El cielo y los elementos decorativos mantienen el carácter de cada escenario.
 
 - Página de inicio con bienvenida, imágenes transparentes y acceso directo al catálogo. El menú permite volver a Inicio conservando la selección; los enlaces de configuración y pedido siguen abriendo su vista directamente. El código del visor 3D se descarga al entrar al showroom.

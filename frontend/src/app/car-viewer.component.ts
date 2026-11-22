@@ -65,7 +65,7 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
   @Input() activePart = 'paint';
   @Input() autoRotate = false;
   @Input() resetKey = 0;
-  @Input() environment:ViewerEnvironment='studio';
+  @Input() environment:ViewerEnvironment='day';
   error = signal(false);
   loading = signal(true);
   m2Loading = signal(false);

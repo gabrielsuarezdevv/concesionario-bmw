@@ -5,10 +5,10 @@ import { VerticalBlurShader } from 'three/addons/shaders/VerticalBlurShader.js';
 import type { ViewerEnvironment } from './viewer-environment-options';
 
 /** Local HDR light cards: long reflections reveal the curvature of the bodywork. */
-export function createStudioEnvironment(renderer: T.WebGLRenderer, environment:ViewerEnvironment='studio'): T.WebGLRenderTarget {
+export function createStudioEnvironment(renderer: T.WebGLRenderer, environment:ViewerEnvironment='day'): T.WebGLRenderTarget {
   const studio = new T.Scene();
   // Keep reflected illumination achromatic; blue scenery must not turn red paint magenta.
-  studio.background = new T.Color(environment==='day'?'#777777':environment==='night'?'#0b0b0b':'#333333');
+  studio.background = new T.Color(environment==='day'?'#777777':'#0b0b0b');
   const panelGeometry = new T.PlaneGeometry();
   const materials: T.MeshBasicMaterial[] = [];
   const panel = (position: number[], size: number[], intensity: number, color = '#ffffff') => {
@@ -23,18 +23,12 @@ export function createStudioEnvironment(renderer: T.WebGLRenderer, environment:V
   if(environment==='day') {
     panel([-3,6,4],[3,3],5.5);panel([0,5,0],[10,8],1.4);
     panel([3,2,-4],[7,3],.8);panel([-5,1,2],[5,2],.5);
-  } else if(environment==='night') {
+  } else {
     panel([0,5,1],[7,.7],3.2);panel([-3,3,-4],[6,.4],2.6);
     panel([1,2,5],[5,1.2],1.4);panel([5,1.5,-1],[1.5,3],1.4);
-  } else {
-    panel([0, 5, 1], [7, 1.4], 5);
-    panel([-3, 3, -4], [6, .65], 6);
-    panel([1, 2, 5], [6, 2.5], 2.5);
-    panel([5, 1.5, -1], [2, 3], 3);
-    panel([-5, 1, 2], [2, 2], 1.5);
   }
   const generator = new T.PMREMGenerator(renderer);
-  const target = generator.fromScene(studio, .012, .1, 30, { size: environment==='studio'?512:256 });
+  const target = generator.fromScene(studio, .012, .1, 30, { size: 256 });
   generator.dispose();
   panelGeometry.dispose();
   materials.forEach(material => material.dispose());
