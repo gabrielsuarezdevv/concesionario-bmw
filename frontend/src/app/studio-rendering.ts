@@ -2,11 +2,13 @@ import * as T from 'three';
 import { FullScreenQuad } from 'three/addons/postprocessing/Pass.js';
 import { HorizontalBlurShader } from 'three/addons/shaders/HorizontalBlurShader.js';
 import { VerticalBlurShader } from 'three/addons/shaders/VerticalBlurShader.js';
+import type { ViewerEnvironment } from './viewer-environment-options';
 
 /** Local HDR light cards: long reflections reveal the curvature of the bodywork. */
-export function createStudioEnvironment(renderer: T.WebGLRenderer): T.WebGLRenderTarget {
+export function createStudioEnvironment(renderer: T.WebGLRenderer, environment:ViewerEnvironment='day'): T.WebGLRenderTarget {
   const studio = new T.Scene();
-  studio.background = new T.Color('#30343b');
+  // Keep reflected illumination achromatic; blue scenery must not turn red paint magenta.
+  studio.background = new T.Color(environment==='day'?'#777777':'#0b0b0b');
   const panelGeometry = new T.PlaneGeometry();
   const materials: T.MeshBasicMaterial[] = [];
   const panel = (position: number[], size: number[], intensity: number, color = '#ffffff') => {
@@ -18,17 +20,19 @@ export function createStudioEnvironment(renderer: T.WebGLRenderer): T.WebGLRende
     mesh.lookAt(0, 0, 0);
     studio.add(mesh);
   };
-  panel([0, 5, 1], [7, 1.4], 5);
-  panel([-3, 3, -4], [6, .65], 6);
-  panel([1, 2, 5], [6, 2.5], 2.5);
-  panel([5, 1.5, -1], [2, 3], 3);
-  panel([-5, 1, 2], [2, 2], 1.5, '#d6e5ff');
+  if(environment==='day') {
+    panel([-3,6,4],[3,3],5.5);panel([0,5,0],[10,8],1.4);
+    panel([3,2,-4],[7,3],.8);panel([-5,1,2],[5,2],.5);
+  } else {
+    panel([0,5,1],[7,.7],3.2);panel([-3,3,-4],[6,.4],2.6);
+    panel([1,2,5],[5,1.2],1.4);panel([5,1.5,-1],[1.5,3],1.4);
+  }
   const generator = new T.PMREMGenerator(renderer);
-  const environment = generator.fromScene(studio, .012, .1, 30, { size: 512 });
+  const target = generator.fromScene(studio, .012, .1, 30, { size: 256 });
   generator.dispose();
   panelGeometry.dispose();
   materials.forEach(material => material.dispose());
-  return environment;
+  return target;
 }
 
 /** Soft contact occlusion, projected from the actual underside of the vehicle. */

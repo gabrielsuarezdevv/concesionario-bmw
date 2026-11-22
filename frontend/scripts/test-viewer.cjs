@@ -26,6 +26,7 @@ const { CabinLook, CABIN_FIELD_OF_VIEW }=loadSource('cabin-look.ts');
 const { addM4UpholsteryMask }=loadSource('m4-upholstery.ts');
 const { CabinMaterials }=loadSource('cabin-materials.ts');
 const { ImportedCar,IMPORTED_MODELS }=loadSource('imported-car.ts');
+const { ViewerEnvironmentRig }=loadSource('viewer-environments.ts');
 
 async function geometryFixture(file){
   const {GLTFLoader}=await import('three/addons/loaders/GLTFLoader.js');
@@ -45,6 +46,48 @@ async function geometryFixture(file){
     const group=new T.Group(),names=[];for(let parent=n.parent;parent;parent=parent.parent)names.push(parent.name);group.name=names.join('/');group.add(mesh);source.add(group);
   }});return {source,expected};
 }
+
+test('environment changes reuse reflection maps and preserve the configured car and lights',()=>{
+  const scene=new T.Scene(),car=new T.Mesh(new T.BoxGeometry(),new T.MeshStandardMaterial({color:'#684091'}));
+  car.position.set(1,2,3);scene.add(car);
+  const renderer={toneMappingExposure:1},created=[];
+  const rig=new ViewerEnvironmentRig(scene,renderer,(_,id)=>{created.push(id);return new T.WebGLRenderTarget(4,4);});
+  const lights=scene.children.filter(node=>node.isLight);
+  assert.equal(lights.length,3);
+  rig.apply('day',false);const day=scene.environment;assert.ok(scene.background.isDataTexture);assert.ok(scene.fog);
+  rig.apply('night',false);assert.notEqual(scene.environment,day);assert.ok(renderer.toneMappingExposure<1);
+  rig.apply('day',false);assert.equal(scene.environment,day);assert.equal(rig.apply('day',false),false);
+  assert.deepEqual(created,['day','night']);assert.deepEqual(scene.children.filter(node=>node.isLight),lights);
+  assert.deepEqual(car.position.toArray(),[1,2,3]);assert.equal(car.material.color.getHexString(),'684091');
+  rig.dispose();assert.deepEqual(scene.children,[car]);car.geometry.dispose();car.material.dispose();
+});
+
+test('night cabins remain lit and environment textures are released on disposal',()=>{
+  const scene=new T.Scene(),renderer={toneMappingExposure:1},targets=[],skies=[];
+  let releasedTargets=0,releasedSkies=0;
+  const rig=new ViewerEnvironmentRig(scene,renderer,()=>{const target=new T.WebGLRenderTarget(4,4);target.addEventListener('dispose',()=>releasedTargets++);targets.push(target);return target;});
+  rig.apply('night',false);const outside=scene.environmentIntensity,exposure=renderer.toneMappingExposure;skies.push(scene.background);
+  rig.apply('night',true);assert.ok(scene.environmentIntensity>outside);assert.ok(renderer.toneMappingExposure>exposure);assert.equal(targets.length,1);
+  rig.apply('day',true);skies.push(scene.background);
+  assert.ok(scene.background.isDataTexture);assert.equal(renderer.toneMappingExposure,1);
+  for(const texture of skies)texture.addEventListener('dispose',()=>releasedSkies++);
+  rig.dispose();assert.equal(releasedTargets,2);assert.equal(releasedSkies,2);assert.equal(scene.environment,null);assert.equal(scene.background,null);
+});
+
+test('all environments use neutral product tone mapping and achromatic light on paint',()=>{
+  const scene=new T.Scene(),renderer={toneMappingExposure:1,toneMapping:T.ACESFilmicToneMapping};
+  const rig=new ViewerEnvironmentRig(scene,renderer,()=>new T.WebGLRenderTarget(4,4));
+  const neutral=color=>{assert.ok(Math.abs(color.r-color.g)<1e-9);assert.ok(Math.abs(color.g-color.b)<1e-9);};
+  for(const environment of ['day','night'])for(const interior of [false,true]) {
+    rig.apply(environment,interior);
+    assert.equal(renderer.toneMapping,T.NeutralToneMapping);
+    assert.ok(renderer.toneMappingExposure<=1.05);
+    for(const light of scene.children.filter(node=>node.isLight)){
+      neutral(light.color);if(light.isHemisphereLight)neutral(light.groundColor);
+    }
+  }
+  rig.dispose();
+});
 for(const id of Object.keys(IMPORTED_MODELS)){
   const file=path.resolve(__dirname,'../public/models',IMPORTED_MODELS[id].file);
   test(id+' preserves body/cabin geometry, proportions and both wheel movements',async()=>{

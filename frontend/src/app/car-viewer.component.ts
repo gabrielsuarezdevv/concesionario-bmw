@@ -4,7 +4,8 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { FlakesTexture } from 'three/addons/textures/FlakesTexture.js';
-import { ContactShadow, createStudioEnvironment } from './studio-rendering';
+import { ContactShadow } from './studio-rendering';
+import { ViewerEnvironment, ViewerEnvironmentRig } from './viewer-environments';
 import { CabinMaterials } from './cabin-materials';
 import { CabinRendering } from './cabin-rendering';
 import { E46Car } from './e46-car';
@@ -64,6 +65,7 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
   @Input() activePart = 'paint';
   @Input() autoRotate = false;
   @Input() resetKey = 0;
+  @Input() environment:ViewerEnvironment='day';
   error = signal(false);
   loading = signal(true);
   m2Loading = signal(false);
@@ -85,7 +87,7 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
   private movingCamera = true;
   private targetPosition = new T.Vector3(5.2, 2.1, 5.4);
   private targetLook = new T.Vector3(0, .65, 0);
-  private environment?: T.WebGLRenderTarget;
+  private environmentRig?:ViewerEnvironmentRig;
   private reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   private lastTime = 0;
   private detailed = new T.Group();
@@ -119,22 +121,11 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
       this.renderer.shadowMap.enabled = true;
       this.renderer.shadowMap.type = T.PCFSoftShadowMap;
       this.renderer.shadowMap.autoUpdate = false;
-      this.renderer.toneMapping = T.ACESFilmicToneMapping;
       this.renderer.toneMappingExposure = 1.05;
       this.renderer.outputColorSpace = T.SRGBColorSpace;
       this.stage.nativeElement.appendChild(this.renderer.domElement);
-      this.environment = createStudioEnvironment(this.renderer);
-      this.scene.environment = this.environment.texture;
-      this.scene.environmentIntensity = 1.15;
-      this.scene.add(new T.HemisphereLight('#e1e9f4', '#141820', .55));
-      const key = new T.DirectionalLight('#ffffff', 1.7); key.position.set(2, 5, 4); key.castShadow = true;
-      key.shadow.mapSize.set(2048, 2048); Object.assign(key.shadow.camera, {left:-4,right:4,top:4,bottom:-4,near:.1,far:15});
-      key.shadow.bias=-.0002; key.shadow.normalBias=.008; key.shadow.camera.updateProjectionMatrix(); this.scene.add(key);
-      const rim = new T.DirectionalLight('#dceaff', .8); rim.position.set(-4, 3, -3); this.scene.add(rim);
-      const floor = new T.Mesh(new T.CircleGeometry(5.5, 96), new T.ShadowMaterial({ color:'#000000',opacity:.20 }));
-      floor.rotation.x = -Math.PI/2; floor.position.y = .015; floor.receiveShadow=true; this.scene.add(floor);
+      this.environmentRig = new ViewerEnvironmentRig(this.scene,this.renderer);
       this.contactShadow = new ContactShadow(); this.scene.add(this.contactShadow.mesh);
-      const ring = new T.Mesh(new T.RingGeometry(3.3,3.307,128),new T.MeshBasicMaterial({color:'#3975ab',transparent:true,opacity:.1,side:T.DoubleSide})); ring.rotation.x=-Math.PI/2; ring.position.y=.025; this.scene.add(ring);
       this.paintNormal = new T.CanvasTexture(new FlakesTexture(128, 128));
       this.paintNormal.wrapS=this.paintNormal.wrapT=T.RepeatWrapping; this.paintNormal.repeat.set(100,100);
       this.paintNormal.anisotropy=Math.min(8,this.renderer.capabilities.getMaxAnisotropy());
@@ -173,14 +164,15 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
       if(changes['model'] && this.model==='m2')this.loadM2();
       if(changes['model']){this.loadE92();this.loadImportedCar();}
       this.applyInputs();
-      if(changes['model'] || changes['exploded'] || changes['view'] || changes['wheels'])this.shadowDirty=true;
+      if(changes['model'] || changes['exploded'] || changes['view'] || changes['wheels'] || changes['environment'])this.shadowDirty=true;
       if(changes['model'] || changes['view'] || changes['resetKey'] || changes['exploded'])this.moveCamera();
       this.requestRender();
     }
   }
   private applyInputs() {
     if(this.assembled)this.assembled.group.visible=false;
-    this.scene.background=this.view==='interior'?new T.Color('#8b929b'):null;
+    this.environmentRig?.apply(this.environment,this.view==='interior');
+    if(this.contactShadow)this.contactShadow.mesh.material.opacity=this.environment==='night'?.65:.85;
     this.cabinMaterials?.setUpholsteryColor(this.interior);
     this.body.color.set(this.paint); this.leather.color.set(this.interior);
     this.alloy.color.set(this.wheels==='forged'?'#353b3e':'#b6bdc2');
@@ -610,9 +602,10 @@ export class CarViewerComponent implements AfterViewInit, OnChanges, OnDestroy {
     cancelAnimationFrame(this.frame); this.observer?.disconnect();this.visibilityObserver?.disconnect();
     document.removeEventListener('visibilitychange',this.visibilityChanged);this.controls?.removeEventListener('change',this.requestRender);this.controls?.dispose();
     if(this.assembled){this.scene.remove(this.assembled.group);this.assembled.dispose();}
+    this.environmentRig?.dispose();
     const materials=new Set<T.Material>(); this.scene.traverse(o=>{ if(o instanceof T.Mesh) {o.geometry.dispose(); for(const m of (Array.isArray(o.material)?o.material:[o.material])) materials.add(m);}});
     const textures=new Set<T.Texture>();
     materials.forEach(m=>{for(const value of Object.values(m))if(value instanceof T.Texture)textures.add(value);m.dispose();});
-    textures.forEach(t=>t.dispose());this.cabinMaterials?.dispose();this.cabinRendering?.dispose();this.paintNormal?.dispose();this.contactShadow?.dispose();this.environment?.dispose();this.renderer?.dispose();
+    textures.forEach(t=>t.dispose());this.cabinMaterials?.dispose();this.cabinRendering?.dispose();this.paintNormal?.dispose();this.contactShadow?.dispose();this.renderer?.dispose();
   }
 }

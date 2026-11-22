@@ -8,8 +8,10 @@ import { OrderCheckoutComponent } from './order-checkout.component';
 import { CarViewerComponent } from './car-viewer.component';
 import { Catalog, DEMO_CATALOG, Option } from './catalog';
 import { HomeComponent } from './home.component';
+import { TechnicalSheetComponent } from './technical-sheet.component';
+import { VIEWER_ENVIRONMENTS, ViewerEnvironment } from './viewer-environment-options';
 
-@Component({ selector: 'app-root', standalone: true, imports: [CarViewerComponent, CurrencyPipe, OrderCheckoutComponent, HomeComponent], templateUrl: './app.component.html' })
+@Component({ selector: 'app-root', standalone: true, imports: [CarViewerComponent, CurrencyPipe, OrderCheckoutComponent, HomeComponent, TechnicalSheetComponent], templateUrl: './app.component.html' })
 export class AppComponent implements OnDestroy {
   readonly checkoutToken = new URLSearchParams(location.search).has('checkout') ? new URLSearchParams(location.search).get('checkout')! : null;
   checkout=signal<CheckoutView|null>(null); qrImage=signal(''); checkoutLink=signal(''); buying=signal(false); purchaseError=signal('');
@@ -31,6 +33,8 @@ export class AppComponent implements OnDestroy {
   catalog=signal<Catalog>(DEMO_CATALOG);
   model=signal('m4'); paint=signal('blue'); wheels=signal('sport'); interior=signal('black');
   activePart=signal('paint'); view=signal('exterior'); exploded=signal(false); autoRotate=signal(false); resetKey=signal(0);
+  readonly environments=VIEWER_ENVIRONMENTS;
+  environment=signal<ViewerEnvironment>('day');
   apiOnline=signal(false); toast=signal(''); saved=signal(false); help=signal(false);
   private toastTimer?: ReturnType<typeof setTimeout>;
   car=computed(()=>this.catalog().models.find(m=>m.id===this.model())!);

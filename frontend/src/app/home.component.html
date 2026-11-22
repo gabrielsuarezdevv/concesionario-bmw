@@ -10,6 +10,7 @@
     <div class="welcome-note"><span class="note-line" aria-hidden="true"></span><p>{{modelCount()}} formas de empezar.<br><b>Una sola forma de ser tú.</b></p></div>
   </div>
   <div class="welcome-showcase">
+    <div class="showcase-topline"><span>SELECCIÓN ATELIER</span><span>DISEÑO EN MOVIMIENTO</span></div>
     <span class="car-wordmark" aria-hidden="true">BMW M</span>
     <div class="showcase-light" aria-hidden="true"></div>
     <div class="showcase-orbit" aria-hidden="true"><span></span></div>
@@ -31,24 +32,35 @@
       }
     </div>
     <p class="showcase-character">{{featured().character}}</p>
+    <div class="showcase-capabilities"><span>Exterior 360°</span><span>Interior inmersivo</span><span>A tu medida</span></div>
   </div>
   <div class="welcome-baseline"><span>EL PLACER DE HACERLO TUYO.</span><span class="baseline-rule" aria-hidden="true"></span><span>EXPLORA SIN LÍMITES.</span></div>
 </section>
 
 <section class="home-journey" aria-labelledby="journey-title">
-  <div class="journey-heading" data-home-reveal><p class="home-kicker">DE LA PRIMERA MIRADA AL ÚLTIMO DETALLE.</p><h2 id="journey-title">No solo lo eliges.<br><span>Lo haces tuyo.</span></h2></div>
+  <div class="journey-heading" data-home-reveal>
+    <p class="home-kicker">DE LA PRIMERA MIRADA AL ÚLTIMO DETALLE.</p>
+    <h2 id="journey-title">No solo lo eliges.<br><span>Lo haces tuyo.</span></h2>
+    <div class="journey-intro"><span>EL DISEÑO EMPIEZA CONTIGO.</span><p>Una silueta, tu acabado, otra perspectiva. Explora cada detalle hasta encontrar el BMW que habla de ti.</p></div>
+  </div>
   <div class="journey-features">
     <article data-home-reveal>
+      <span class="feature-label">ENCUENTRA TU MODELO</span>
       <div class="journey-symbol silhouette-symbol" aria-hidden="true"><svg viewBox="0 0 64 32" fill="none"><path d="m5 22 4-9 12-3 8-7h16l8 11 7 3v9H5v-4Z"/><path d="m23 11 8-6h12l5 8H15"/><circle cx="17" cy="25" r="5"/><circle cx="48" cy="25" r="5"/></svg></div>
       <h3>Una silueta que va contigo.</h3><p>Clásicos con historia y nuevas expresiones del carácter BMW. Encuentra la tuya.</p>
+      <a class="feature-link" href="#coleccion" (click)="visit.emit({section:'coleccion',event:$event})">Explorar {{modelCount()}} modelos</a>
     </article>
     <article data-home-reveal style="--reveal-delay:80ms">
+      <span class="feature-label">DALE TU CARÁCTER</span>
       <div class="journey-symbol palette-symbol" aria-hidden="true"><i></i><i></i><i></i></div>
       <h3>Tu carácter, en cada acabado.</h3><p>Pintura, llantas y tapicería. Combina los detalles hasta reconocerte en ellos.</p>
+      <a class="feature-link" href="#configurador" (click)="visit.emit({section:'configurador',event:$event})">Crear mi configuración</a>
     </article>
     <article data-home-reveal style="--reveal-delay:160ms">
+      <span class="feature-label">EXPLORA CADA ÁNGULO</span>
       <div class="journey-symbol orbit-symbol" aria-hidden="true"><span>360°</span></div>
       <h3>Cambia tu punto de vista.</h3><p>Rodéalo, siéntate al volante y descubre el diseño que hay bajo la carrocería.</p>
+      <a class="feature-link" href="#experiencia" (click)="visit.emit({section:'experiencia',event:$event})">Descubrir la experiencia</a>
     </article>
   </div>
 </section>

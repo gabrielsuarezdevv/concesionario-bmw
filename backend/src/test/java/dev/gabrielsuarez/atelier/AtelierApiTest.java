@@ -26,7 +26,11 @@ class AtelierApiTest {
             .andExpect(jsonPath("$.models[2].power").value("460"))
             .andExpect(jsonPath("$.models[3].id").value("e92"))
             .andExpect(jsonPath("$.models[4].id").value("x6"))
-            .andExpect(jsonPath("$.models[5].id").value("f82"));
+            .andExpect(jsonPath("$.models[4].power").value("340"))
+            .andExpect(jsonPath("$.models[4].acceleration").value("5,5"))
+            .andExpect(jsonPath("$.models[5].id").value("f82"))
+            .andExpect(jsonPath("$.models[5].power").value("431"))
+            .andExpect(jsonPath("$.models[5].acceleration").value("4,1"));
         for (String retired : new String[]{"i4","e36","gtr","e34","1m"}) {
             for(String endpoint : new String[]{"/api/quotes","/api/configurations","/api/checkouts"})
                 mvc.perform(post(endpoint).contentType(MediaType.APPLICATION_JSON).content(selection.replace("m4", retired)))

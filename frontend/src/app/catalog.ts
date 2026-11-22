@@ -8,8 +8,8 @@ export const DEMO_CATALOG: Catalog = {
     { id: 'e46', name: '330i E46', subtitle: 'El carácter de un clásico.', price: 35000, power: '231', acceleration: '6,5', drive: 'Trasera' },
     { id: 'm2', name: 'M2 G87', subtitle: 'Toda la esencia M. Sin filtros.', price: 96900, power: '460', acceleration: '4,1', drive: 'Trasera' },
     { id: 'e92', name: 'M3 E92', subtitle: 'El pulso de otra generación.', price: 58000, power: '420', acceleration: '4,8', drive: 'Trasera' },
-    {"id":"x6","name":"X6 xDrive40i","subtitle":"Presencia sin límites.","price":85000,"power":"N/D","acceleration":"N/D","drive":"xDrive"},
-    {"id":"f82","name":"M4 F82","subtitle":"Una silueta que marca época.","price":65000,"power":"N/D","acceleration":"N/D","drive":"Trasera"}
+    {"id":"x6","name":"X6 xDrive40i","subtitle":"Presencia sin límites.","price":85000,"power":"340","acceleration":"5,5","drive":"xDrive"},
+    {"id":"f82","name":"M4 F82","subtitle":"Una silueta que marca época.","price":65000,"power":"431","acceleration":"4,1","drive":"Trasera"}
   ],
   paints: [
     { id: 'blue', name: 'Portimao Blue', hex: '#2868b2', price: 0 },

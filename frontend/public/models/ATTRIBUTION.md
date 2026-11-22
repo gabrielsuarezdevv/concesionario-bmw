@@ -105,6 +105,6 @@ For both imported models, the complete exterior and their own cabin share one no
 transform. Original geometry, UVs and textures are retained. Runtime changes include configurable
 paint, rim finish and upholstery, adapted glazing and illustrative manual separation by groups.
 These are artistic assets, not factory-accurate engineering twins.
-The F82's originally blue door and dashboard upholstery panels follow the interior selection, together with its seats. Power and acceleration remain N/D for these custom variants because they have not been verified.
+The F82's originally blue door and dashboard upholstery panels follow the interior selection, together with its seats. The technical sheet uses explicitly identified factory reference versions: the 2020 X6 xDrive40i (340 CV, 5.5 s, Steptronic) and the 2014 M4 Coupe (431 CV, 4.1 s, M DCT). These are not measurements of the customized artistic assets. Manufacturer source links are displayed in each technical sheet.
 Transparent PNG renders contain only each vehicle, with no showroom background, floor or labels;
 each derived preview retains the applicable source asset license stated above.
