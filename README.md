@@ -1,202 +1,389 @@
 # BMW Atelier
 
-Showroom de concesionario BMW con **Angular 21, Three.js y Spring Boot 3.5 / Java 21**. Interfaz en español, adaptable a móvil, con configuración 3D y presupuestos persistentes.
+### El placer de hacerlo tuyo.
 
-## Arrancar en desarrollo
+**Showroom digital y configurador 3D de vehículos BMW, desarrollado con Angular, Three.js y Spring Boot.** Explora el exterior, entra en el habitáculo y personaliza los acabados antes de continuar con un pedido de demostración mediante QR.
 
-Requisitos: Node.js 24 y JDK 21 o superior. Configura `JAVA_HOME` apuntando a tu JDK. Maven Wrapper descarga Maven 3.9.11 en el primer arranque; no necesitas instalar Maven por separado.
+[![Build and test](https://github.com/gabrielsuarezdevv/concesionario-bmw/actions/workflows/ci.yml/badge.svg?branch=feat%2Fbmw-atelier)](https://github.com/gabrielsuarezdevv/concesionario-bmw/actions/workflows/ci.yml)
+![Angular 21](https://img.shields.io/badge/Angular-21-DD0031?logo=angular&logoColor=white)
+![Three.js](https://img.shields.io/badge/Three.js-0.181-111111?logo=threedotjs&logoColor=white)
+![Spring Boot 3.5](https://img.shields.io/badge/Spring_Boot-3.5-6DB33F?logo=springboot&logoColor=white)
+![Java 21](https://img.shields.io/badge/Java-21-007396)
 
-Terminal 1, desde la raíz del proyecto:
+![Página de inicio de BMW Atelier con el M4 F82 y acceso al catálogo](docs/images/inicio.jpg)
+
+**Estado:** V1 funcional en local. El despliegue público está pendiente; todavía no hay una URL de demostración online.
+
+> Proyecto personal e independiente, sin afiliación con BMW AG. Los precios y los pedidos son de demostración. No se realizan cobros ni compraventas reales.
+
+[Características](#características) · [Instalación](#instalación-local) · [Docker](#ejecución-con-docker) · [API](#api-rest) · [Pruebas](#pruebas-y-ci) · [Créditos](#créditos-y-licencias)
+
+## El proyecto
+
+BMW Atelier lleva la experiencia de un concesionario a una interfaz donde el vehículo se puede explorar y configurar en tiempo real. La propuesta combina una presentación visual cuidada con un flujo completo entre navegador, API, persistencia y confirmación por correo.
+
+El reto principal es mantener una experiencia 3D fluida con modelos detallados, conservar la coherencia entre exterior e interior y validar las configuraciones y los pedidos en el servidor.
+
+## Características
+
+### Explorar
+
+- Página de inicio con selección de modelos destacados, transiciones y acceso al catálogo.
+- Catálogo de seis vehículos con renders PNG de fondo transparente.
+- Visor exterior 360° con rotación, zoom, restablecimiento de cámara y giro automático opcional.
+- Cámara interior con control de la mirada y ajuste del campo de visión.
+- Escenarios **Día y Noche**, con iluminación y reflejos neutros para conservar mejor el matiz de la pintura.
+- Ficha técnica por modelo, con versión de serie de referencia y enlaces a fuentes de BMW.
+
+### Personalizar
+
+- **12 colores de carrocería**, **2 acabados de llantas** y **5 ambientes de tapicería**.
+- Actualización de materiales y presupuesto al cambiar la selección.
+- Vista de despiece animada por grupos visuales, activada manualmente.
+- Enlaces para compartir la configuración, restauración local y exportación a JSON.
+- Diseño adaptable a escritorio y móvil, controles de teclado y respeto por la preferencia de movimiento reducido.
+
+### Completar un pedido de demostración
+
+- Resumen de la configuración con botón **Comprar** y generación de un QR.
+- Formulario móvil con nombre completo, edad y correo electrónico.
+- Validación de mayoría de edad tanto en Angular como en Spring Boot.
+- Precio calculado por el backend a partir del catálogo, sin confiar en importes del navegador.
+- Sesiones de compra de 30 minutos y protección frente a pedidos duplicados.
+- Confirmación por correo mediante SMTP, con integración preparada para Brevo y reintentos de envío.
+- Modo local de correo para probar el flujo sin enviar mensajes reales.
+
+Los cambios de pintura, llantas o tapicería **no activan el despiece automáticamente**.
+
+## Vehículos disponibles
+
+| Vehículo | Identificador | Versión utilizada como referencia técnica |
+| --- | --- | --- |
+| BMW M4 Competition | `m4` | M4 Competition M xDrive Coupé G82 · 2024 |
+| BMW 330i E46 | `e46` | 330i Berlina E46 · 2000 · Manual |
+| BMW M2 G87 | `m2` | M2 Coupé G87 · 2023 · M Steptronic |
+| BMW M3 E92 | `e92` | M3 Coupé E92 · 2007 · Manual |
+| BMW X6 xDrive40i | `x6` | X6 xDrive40i G06 · 2020 · Steptronic |
+| BMW M4 F82 | `f82` | M4 Coupé F82 · 2014 · M DKG |
+
+Los recursos 3D pueden incorporar modificaciones estéticas o mecánicas de sus autores. Las fichas describen las versiones de serie indicadas; no son mediciones de esos recursos ni garantizan una correspondencia exacta con ellos. El E46 del catálogo es una berlina 330i de cuatro puertas.
+
+## Tecnologías
+
+| Capa | Tecnologías y responsabilidad |
+| --- | --- |
+| Interfaz | Angular 21, TypeScript, componentes standalone, Signals, formularios reactivos y CSS |
+| Gráficos | Three.js 0.181, WebGL, modelos GLB/glTF, materiales físicos y sombras de contacto |
+| Backend | Java 21, Spring Boot 3.5, Spring Web y Bean Validation |
+| Persistencia | Spring Data JPA y H2 en archivo |
+| Correo | Spring Mail, SMTP y perfil de configuración para Brevo |
+| Pruebas | Node Test Runner, JUnit, Spring Boot Test y decodificación independiente del QR |
+| Herramientas | Maven Wrapper, npm, Docker Compose, Git y GitHub Actions |
+
+## Arquitectura
+
+```mermaid
+flowchart LR
+    A[Angular · Interfaz] --> B[Three.js · Visor 3D]
+    A -->|HTTP /api| C[Spring Boot · API REST]
+    C --> D[JPA · H2 persistente]
+    C --> E[Cola de confirmaciones]
+    E --> F[SMTP · Brevo]
+    E --> G[Vista previa local .eml]
+```
+
+En desarrollo, Angular se ejecuta en el puerto **4200** y reenvía `/api` a Spring Boot en el **8080** mediante el proxy incluido. El navegador utiliza un único origen y no necesita una configuración adicional de CORS.
+
+La imagen Docker compila Angular e incorpora su salida como recursos estáticos de Spring Boot. En esa modalidad, la web y la API se sirven juntas desde el puerto **8080**.
+
+## Instalación local
+
+### Requisitos
+
+- **Node.js 24** y npm.
+- **JDK 21** recomendado, con `JAVA_HOME` configurado.
+- Git.
+
+El repositorio incluye Maven Wrapper, que descarga Maven 3.9.11 en la primera ejecución. No hace falta instalar Maven por separado. El primer arranque requiere conexión a Internet para descargar dependencias.
+
+### 1. Clonar la V1
+
+La versión documentada se encuentra actualmente en la rama `feat/bmw-atelier`.
+
+```sh
+git clone --branch feat/bmw-atelier https://github.com/gabrielsuarezdevv/concesionario-bmw.git
+cd concesionario-bmw
+```
+
+### 2. Iniciar el backend
+
+En una terminal, desde la raíz del repositorio:
 
 ```powershell
 cd backend
 .\mvnw.cmd spring-boot:run
 ```
 
-Terminal 2:
+En macOS o Linux, utiliza `./mvnw spring-boot:run`.
 
-```powershell
+### 3. Iniciar el frontend
+
+En otra terminal, desde la raíz del repositorio:
+
+```sh
 cd frontend
 npm ci
 npm start
 ```
 
-Abre http://127.0.0.1:4200. Angular reenvía `/api` al servidor en el puerto 8080; no es necesario habilitar CORS. En macOS/Linux usa `./mvnw` en lugar de `mvnw.cmd`.
+| Servicio | Dirección |
+| --- | --- |
+| Aplicación | <http://127.0.0.1:4200> |
+| Estado de la API | <http://127.0.0.1:8080/api/health> |
+| Catálogo de la API | <http://127.0.0.1:8080/api/catalog> |
 
-## Experiencia disponible
+Por defecto, el backend utiliza H2 y el modo de correo `preview`: se puede recorrer el flujo completo de pedido sin configurar un servicio de email. Los datos se guardan en `backend/data/`, fuera del control de versiones.
 
-- Dos ambientes del visor: Día (inicial) y Noche. Cada uno cambia fondo, suelo, luces y reflejos; el interior nocturno conserva luz de apoyo. Los mapas de reflejos se generan localmente bajo demanda y se reutilizan al cambiar de ambiente. El escenario se mantiene al elegir otro coche y no modifica su configuración ni su precio.
-- La luz directa y los mapas de reflejos son neutros para conservar el matiz de la pintura. Se usa Neutral Tone Mapping y exposición contenida para evitar que los colores saturados se aclaren hacia tonos pastel. El cielo y los elementos decorativos mantienen el carácter de cada escenario.
+## Ejecución con Docker
 
-- Página de inicio con bienvenida, imágenes transparentes y acceso directo al catálogo. El menú permite volver a Inicio conservando la selección; los enlaces de configuración y pedido siguen abriendo su vista directamente. El código del visor 3D se descarga al entrar al showroom.
+Requiere Docker Engine o Docker Desktop con Docker Compose. No requiere instalar Node.js ni Java en el equipo anfitrión.
 
-- BMW M4 Competition, BMW 330i E46, BMW M2 G87, BMW M3 E92, X6 xDrive40i y M4 F82 con archivos GLB independientes, rotación 360° con ratón, gestos o flechas; zoom con rueda o +/−. Los modelos se cargan al seleccionarlos.
-- Iluminación de estudio generada localmente, pintura con barniz y microtextura, cristales con transmisión física y sombras de contacto proyectadas desde la geometría. Se conservan las texturas originales de carbono, neumáticos y detalles de las ruedas. El realismo sigue limitado por la malla y las texturas del modelo de origen.
-- Cámara interior desde el puesto del conductor, con campo de visión de 82°. Arrastra con ratón o dedo para mirar alrededor sin desplazar la cámara fuera del asiento. También funcionan las cuatro flechas; + / − ajustan el ángulo entre 60° y 95°, e Inicio centra la mirada. La tapicería conserva su color al cambiar de dirección.
-- Habitáculo con vinilo no metálico, mapas de detalle de cuero CC0 de Poly Haven y oclusión ambiental de corto alcance, calculada solo en la vista interior. Los cristales no participan como superficies opacas en ese cálculo. En el M4, que comparte materiales entre asientos y molduras, la máscara de tapicería se calcula una vez al cargar a partir de paneles conectados. El tinte cubre cada panel completo, incluidos bordes y reposacabezas; las costuras de UV y normales no provocan cortes de color. No se modifica la geometría ni se añaden pasadas de renderizado.
-- Despiece animado por grupos visuales: carrocería, acristalamiento, habitáculo y cuatro ruedas. Se activa manualmente desde sus controles; cambiar pintura, llantas o tapicería conserva la vista elegida.
-- Doce pinturas, dos acabados de llantas y cinco colores de tapicería: Negro, Tartufo, Silverstone, Burdeos y Azul Noche. Los dos nuevos interiores tienen un suplemento de demostración de 2.200 €. Se añaden Rojo Rubí, Naranja Cobre, Amarillo Solar, Violeta Amatista, Azul Hielo, Azul Medianoche y Plata Titanio a la paleta exterior de demostración. Los cambios son de materiales; no sustituyen geometría por piezas OEM ni garantizan disponibilidad de fábrica.
-- Ficha técnica bajo el visor, con motor, cilindrada, par, transmisión, carrocería y velocidad máxima. Cada coche identifica su versión de serie de referencia y enlaza a fuentes de BMW. El X6 toma como referencia el xDrive40i G06 de 2020 (340 CV y 5,5 s); el F82, el M4 Coupé de 2014 con M DKG (431 CV y 4,1 s). Los datos no representan mediciones de los modelos 3D modificados.
-- Catálogo de seis modelos, con imágenes PNG transparentes generadas desde el mismo visor 3D. Las configuraciones antiguas con modelos retirados vuelven al M4 al abrir la web. Las fichas, precios y opciones son de demostración; los acabados no representan un catálogo de fábrica.
-- Resumen con botón Comprar, QR para completar el pedido desde el móvil, restauración local, enlaces de configuración y descarga JSON.
-- El presupuesto y el pedido se validan en Spring Boot. Si el servidor no está disponible se puede compartir o descargar la selección, pero no confirmar una compra.
-- Navegación por teclado, diálogos nativos, avisos accesibles y respeto por movimiento reducido.
+Desde la raíz del repositorio:
 
-## Validar
+```sh
+docker compose up --build -d
+docker compose logs -f atelier
+```
+
+Abre <http://127.0.0.1:8080>. Para detener la aplicación:
+
+```sh
+docker compose down
+```
+
+El volumen `atelier-data` conserva la base de datos entre arranques. `docker compose down` mantiene el volumen; añadir `-v` elimina también esos datos. El servicio se publica solo en la interfaz local del equipo y el proceso del contenedor se ejecuta con un usuario sin privilegios.
+
+La receta Docker está incluida en el repositorio; su construcción completa no se ha validado en este equipo. El despliegue remoto se verificará por separado.
+
+## Configuración y correo
+
+### Variables de entorno
+
+| Variable | Uso | Valor predeterminado de la aplicación |
+| --- | --- | --- |
+| `PORT` | Puerto HTTP de Spring Boot | `8080` |
+| `DATABASE_URL` | URL JDBC de la base de datos | H2 en `./data/atelier` |
+| `DATABASE_USERNAME` | Usuario de la base de datos | `sa` |
+| `DATABASE_PASSWORD` | Contraseña de la base de datos | Vacía, para desarrollo local |
+| `CHECKOUT_PUBLIC_URL` | Origen público de la web para los enlaces del QR | Vacío; se utiliza una ruta relativa |
+| `ORDER_MAIL_MODE` | `preview` o `smtp` | `preview` |
+| `ORDER_MAIL_FROM` | Dirección del remitente | `pedidos@bmw-atelier.test` |
+| `ORDER_MAIL_PREVIEW_DIRECTORY` | Carpeta de archivos `.eml` | `./data/mail-preview` |
+| `ORDER_MAIL_DISPATCH_ENABLED` | Activar el procesamiento de correos pendientes | `true` |
+| `SMTP_HOST` | Servidor SMTP | `127.0.0.1` |
+| `SMTP_PORT` | Puerto SMTP | `587` |
+| `SMTP_USERNAME` / `SMTP_PASSWORD` | Credenciales SMTP | Sin configurar |
+| `SMTP_AUTH` / `SMTP_STARTTLS` | Autenticación y STARTTLS obligatorio | `true` |
+| `SMTP_SSL` | TLS implícito | `false` |
+
+Estas variables corresponden a la aplicación. `compose.yaml` reenvía las variables de correo y la URL pública que declara; para añadir otras, amplía su bloque `environment`. En Docker, cambiar `PORT` también requiere ajustar el puerto publicado.
+
+### Probar sin enviar correos
+
+Con `ORDER_MAIL_MODE=preview`, cada confirmación genera un archivo `.eml`. En desarrollo se guarda en `backend/data/mail-preview/`; en Docker, dentro del volumen de datos. La interfaz diferencia un correo preparado localmente de uno enviado por SMTP.
+
+### Activar Brevo
+
+Necesitas una cuenta de Brevo, un remitente verificado, el login SMTP y una **clave SMTP**. Una clave SMTP es distinta de la contraseña de la cuenta y de una clave de API.
+
+**En Docker:** copia el archivo de ejemplo, completa sus campos y cambia `ORDER_MAIL_MODE` a `smtp`.
 
 ```powershell
-cd frontend
+Copy-Item .env.example .env
+```
+
+El ejemplo ya contiene el servidor `smtp-relay.brevo.com`, el puerto `587` y STARTTLS. Después, inicia o recrea el servicio con `docker compose up --build -d`. Docker Compose lee `.env`; Java y Maven no lo cargan automáticamente.
+
+**En Windows, sin Docker:** compila primero el backend con `.\mvnw.cmd verify` desde `backend`. Después, desde la raíz:
+
+```powershell
+powershell -File .\scripts\configure-brevo.ps1
+powershell -File .\scripts\start-brevo.ps1
+```
+
+El asistente solicita la clave con entrada oculta y la guarda cifrada con DPAPI para el usuario de Windows. El lanzador inicia el JAR con el perfil `brevo`; detén antes cualquier backend que ocupe el puerto 8080. Los archivos de configuración permanecen en `backend/data/` y no se suben a Git.
+
+**En otros entornos:** define `ORDER_MAIL_FROM`, `SMTP_USERNAME` y `SMTP_PASSWORD` en el entorno del proceso y arranca el JAR con `--spring.profiles.active=brevo`.
+
+Mantén las credenciales fuera del código, del frontend y de las capturas de pantalla. Consulta [la configuración SMTP de Brevo](https://help.brevo.com/hc/en-us/articles/7924908994450-Send-transactional-emails-using-Brevo-SMTP) para obtener los datos de tu cuenta.
+
+## Probar el QR desde un móvil
+
+Un QR que apunta a `localhost` no permite acceder al ordenador desde el teléfono: esa dirección identifica al propio dispositivo. Para probarlo en una red local, conecta ambos equipos a la misma red y utiliza una IPv4 privada del ordenador.
+
+1. Mantén Spring Boot iniciado en `127.0.0.1:8080`.
+2. Desde la raíz, compila Angular y arranca el puente de vista previa:
+
+   ```sh
+   npm --prefix frontend run build
+   node scripts/checkout-preview.cjs --host 192.168.1.20
+   ```
+
+3. Sustituye `192.168.1.20` por tu dirección real y abre `http://192.168.1.20:4300` en el navegador.
+4. Configura un coche, pulsa **Ver mi configuración → Comprar** y escanea el QR.
+
+Deja `CHECKOUT_PUBLIC_URL` vacío para utilizar el origen desde el que abres la web o configúralo con esa misma dirección, sin fragmentos ni parámetros. Una URL pública antigua en esa variable hará que el QR apunte al destino incorrecto.
+
+El puente sirve la compilación y reenvía su API. No publica la carpeta de datos ni modifica el firewall. Una red con aislamiento entre dispositivos o un firewall que bloquee el puerto puede impedir la conexión. Detén el puente con `Ctrl+C` al finalizar.
+
+## API REST
+
+| Método | Ruta | Función |
+| --- | --- | --- |
+| `GET` | `/api/health` | Consultar el estado del servicio |
+| `GET` | `/api/catalog` | Obtener vehículos y opciones |
+| `POST` | `/api/quotes` | Validar una selección y calcular su presupuesto |
+| `POST` | `/api/configurations` | Guardar una configuración |
+| `GET` | `/api/configurations/{id}` | Recuperar una configuración por UUID |
+| `POST` | `/api/checkouts` | Crear una sesión de compra y su enlace |
+| `GET` | `/api/checkouts/{id}` | Consultar la configuración y el estado del pedido |
+| `POST` | `/api/checkouts/{id}/orders` | Registrar los datos del comprador y preparar la confirmación |
+
+### Configuración de ejemplo
+
+Este cuerpo se utiliza para presupuestos, configuraciones guardadas y sesiones de compra:
+
+```json
+{
+  "model": "m4",
+  "paint": "green",
+  "wheels": "forged",
+  "interior": "cognac"
+}
+```
+
+El servidor calcula un total de demostración de **130.600 EUR** para esa selección. Los identificadores válidos y sus precios se obtienen de `/api/catalog`.
+
+### Confirmación de ejemplo
+
+El UUID debe proceder de una sesión creada previamente. El cuerpo para `/api/checkouts/{id}/orders` es:
+
+```json
+{
+  "fullName": "Persona de prueba",
+  "age": 25,
+  "email": "persona@example.com"
+}
+```
+
+Los errores relevantes son `400` para datos no válidos, `404` para registros inexistentes, `409` para un QR ya utilizado con otros datos y `410` para una sesión abierta caducada o un modelo retirado.
+
+## Integridad del pedido
+
+Al generar el QR, el backend conserva una instantánea del vehículo, los acabados y el precio. El enlace caduca a los **30 minutos** si todavía no se ha confirmado el pedido.
+
+La confirmación exige una edad entera de **18 años o más**, declarada por el usuario. No hay verificación documental de identidad. Repetir la misma solicitud devuelve la referencia existente; las transacciones y los bloqueos evitan crear varios pedidos para el mismo QR ante solicitudes simultáneas.
+
+Los datos del comprador se guardan en la base de datos y no aparecen en el QR ni en las respuestas públicas de consulta. Los enlaces conocidos permiten recuperar configuraciones y estados; no hay un sistema de cuentas ni un listado público de pedidos.
+
+La confirmación por correo se procesa a partir de registros persistentes. Si falla SMTP, el pedido se conserva y el envío se intenta hasta **cinco veces** en total. El estado distingue pendiente, enviado, vista previa y fallo. Un correo marcado como enviado ha sido aceptado por el servidor SMTP; no implica una entrega garantizada en la bandeja de entrada.
+
+## Rendimiento 3D
+
+El visor utiliza varias medidas para reducir trabajo innecesario:
+
+- **Renderizado bajo demanda:** se detiene en reposo, fuera de pantalla o al ocultar la pestaña.
+- **Carga de modelos bajo demanda:** cada GLB se descarga al seleccionarlo; el código del visor se difiere hasta entrar al showroom.
+- **Agrupación de geometrías opacas:** reduce llamadas de dibujo conservando materiales y movimientos de despiece. Las transparencias mantienen su separación para ordenar correctamente su renderizado.
+- **Resolución adaptativa:** limita la densidad de píxeles, reduce la resolución durante la interacción y la recupera al detenerse.
+- **Animación limitada a 60 FPS:** evita trabajo adicional en pantallas de alta frecuencia.
+- **Recursos reutilizados:** los mapas de reflejos de cada escenario se generan localmente y se conservan para los siguientes cambios.
+
+La fluidez depende de la GPU, la aceleración gráfica del navegador y la complejidad del modelo. No se afirma una tasa de FPS garantizada para todos los dispositivos.
+
+En desarrollo, añade `viewerStats=1` a la URL para mostrar FPS, resolución, llamadas de dibujo y contador de fotogramas. Ese diagnóstico no se muestra en la compilación de producción.
+
+## Pruebas y CI
+
+Desde `frontend`:
+
+```sh
 npm run build
 npm run test:qr
 npm run test:viewer
 ```
 
+Desde `backend`, en Windows:
+
 ```powershell
-cd backend
 .\mvnw.cmd verify
 ```
 
-Las 16 pruebas de integración verifican precios, opciones, mayoría de edad, caducidad, concurrencia, pedidos únicos y reintentos de email. El QR se decodifica con una biblioteca independiente. GitHub Actions compila Angular, verifica el QR y ejecuta `verify` de Maven en cada PR y push a `main` o `feat/**`.
+En macOS o Linux, utiliza `./mvnw verify`.
 
-## Rendimiento del visor
+Las comprobaciones cubren:
 
-El visor dibuja bajo demanda: se detiene al quedar quieto, al salir de pantalla o al ocultar la pestaña. El giro automático, la inercia y las transiciones siguen animándose, con un máximo de 60 FPS y un reloj que mantiene ese límite en pantallas de 60 a 240 Hz. Solo se descarga y adapta cada modelo cuando se selecciona; los modelos ocultos no participan en la animación.
+- **QR:** generación y lectura con una biblioteca de decodificación independiente.
+- **Visor:** conservación de geometría y materiales, despiece, variantes de ruedas, transparencias, tapicería, escenarios, liberación de recursos, resolución y cadencia de fotogramas.
+- **API y pedidos:** precios, validaciones, mayoría de edad, caducidad, concurrencia, unicidad de pedidos y reintentos de correo.
 
-Las geometrías opacas con el mismo material se agrupan respetando sus desplazamientos de despiece. Para el exterior ensamblado se utiliza una segunda representación que permite agrupar también entre piezas. Comparte los materiales y conserva todos los vértices y texturas; al activar el despiece o entrar en el habitáculo se muestran las piezas originales. Solo se conserva una representación ensamblada adicional a la vez. Las variantes de ruedas del E46 mantienen sus controles de visibilidad y las superficies transparentes conservan sus límites de ordenación.
+Las pruebas del visor verifican geometría y decisiones de renderizado sin necesitar un contexto WebGL. La revisión visual del 3D y las pruebas en dispositivos complementan esa cobertura.
 
-La resolución se limita a DPR 1,5 y aproximadamente 1,2 millones de píxeles, baja temporalmente durante el movimiento y se ajusta más si los fotogramas siguen siendo lentos. La resolución de reposo se recupera al detenerse. La refracción usa una captura reducida; la oclusión del habitáculo se restaura al finalizar el desplazamiento de cámara. No se simplifican las mallas ni se sustituyen los interiores.
+El workflow [Build and test](.github/workflows/ci.yml) compila Angular, ejecuta las comprobaciones del QR y del visor, y verifica el backend en cada pull request y en los pushes a `main` o `feat/**`.
 
-En desarrollo, añade `viewerStats=1` a la URL para mostrar FPS, llamadas de dibujo, resolución y un contador de fotogramas. El contador debe dejar de aumentar en reposo; la compilación de producción no muestra este diagnóstico. Las llamadas reflejan el último render de Three.js; los pases del compositor interior tienen sus propias estadísticas.
-
-`npm run test:viewer` comprueba conservación de geometría/materiales, despiece, variantes de ruedas, transparencia, liberación de los buffers adicionales, adaptación de resolución y cadencia en pantallas de 30 a 240 Hz. Para el giro WebGL también es necesaria la aceleración gráfica del navegador.
-
-## API
-
-| Método | Ruta | Resultado |
-|---|---|---|
-| GET | `/api/health` | Estado del servicio |
-| GET | `/api/catalog` | Modelos y opciones de demostración |
-| POST | `/api/quotes` | Presupuesto validado y calculado |
-| POST | `/api/configurations` | Guarda y devuelve UUID y precio |
-| GET | `/api/configurations/{uuid}` | Recupera una configuración |
-| POST | `/api/checkouts` | Congela el coche, acabados y precio; genera un enlace de compra de 30 minutos |
-| GET | `/api/checkouts/{uuid}` | Configuración y estado del pedido, sin datos del comprador |
-| POST | `/api/checkouts/{uuid}/orders` | Valida los datos, registra el pedido y prepara su email |
-
-Ejemplo de entrada para ambos POST:
-
-```json
-{"model":"m4","paint":"green","wheels":"forged","interior":"cognac"}
-```
-
-El resultado orientativo para este ejemplo es 130.600 EUR. Opciones desconocidas o incompletas devuelven 400; una configuración inexistente devuelve 404. Los registros H2 se guardan en `backend/data/` (ignorado por Git). Los UUID permiten recuperar configuraciones por enlace conocido; no hay cuentas ni listado público de registros.
-
-## Compra mediante QR y confirmación por email
-
-«Ver mi configuración» → «Comprar» genera un QR que abre `/?checkout=<uuid>`. El formulario pide nombre completo, edad y correo. Se exigen 18 años cumplidos y una edad entera, tanto en Angular como en Spring Boot. La edad se declara en el formulario; no se verifica un documento de identidad. No hay pasarela ni cobro.
-
-El servidor conserva el coche y sus acabados al crear el QR; calcula el total sin confiar en importes del navegador. El enlace caduca a los 30 minutos. Cada QR admite un solo pedido: repetir la misma solicitud devuelve su referencia, incluso con envíos simultáneos. Un comprador distinto recibe 409; un enlace caducado, 410.
-
-El pedido guarda nombre, edad y correo en la base de datos local. El QR, las respuestas públicas y los logs de envío no contienen estos datos. El email incluye nombre, referencia, coche, acabados e importe; no incluye la edad. Un fallo SMTP conserva el pedido y reintenta hasta cinco veces. La pantalla distingue correo pendiente, enviado, preparado en local y fallo de entrega. «Enviado» significa aceptado por el servidor SMTP, no garantiza que llegue a la bandeja de entrada.
-
-Por defecto `ORDER_MAIL_MODE=preview`: se genera un mensaje `.eml` en `backend/data/mail-preview/`, sin enviar correo real. La interfaz indica este modo. Los mensajes y la base de datos están ignorados por Git y no se sirven como archivos web.
-
-### Servicio gratuito: Brevo
-
-La conexión está preparada para **Brevo Free**, cuyo plan ofrece actualmente 300 envíos diarios, incluidos correos transaccionales ([plan oficial](https://help.brevo.com/hc/en-us/articles/208589409-About-Brevo-s-pricing-plans)). Hace falta una cuenta propia, un remitente verificado y las credenciales de la pestaña SMTP de Brevo. La contraseña es una **clave SMTP**, no una API key ni la contraseña de la cuenta ([configuración oficial](https://help.brevo.com/hc/en-us/articles/7924908994450-Send-transactional-emails-using-Brevo-SMTP)).
-
-Define `ORDER_MAIL_FROM` con el remitente verificado, `SMTP_USERNAME` con el login SMTP y `SMTP_PASSWORD` con la clave SMTP como variables de entorno del proceso. Arranca desde `backend` con:
-
-```powershell
-java -jar target/bmw-atelier-1.0.0.jar --server.address=127.0.0.1 --spring.profiles.active=brevo
-```
-
-El perfil `brevo` activa SMTP en `smtp-relay.brevo.com:587`, con autenticación y STARTTLS obligatorio. No se incluyen credenciales. Para Docker, copia `.env.example` a `.env`, completa los valores y cambia `ORDER_MAIL_MODE=smtp`; Compose los pasa al contenedor. Java/Maven no cargan `.env` automáticamente. Mantén las claves fuera del repositorio y del frontend.
-
-En Windows puedes evitar introducir la clave en un comando o archivo de texto. Desde la raíz del proyecto, ejecuta `powershell -File .\scripts\configure-brevo.ps1`: pide el remitente verificado, el login SMTP y la clave con entrada oculta. Guarda la clave cifrada mediante DPAPI para tu usuario de Windows en `backend/data/brevo.credentials.xml`, ignorado por Git. El asistente solo guarda la configuración; no envía mensajes. No compartas este archivo ni captures la clave en pantalla.
-
-Después de detener el backend anterior, `powershell -File .\scripts\start-brevo.ps1` arranca el servidor con esas credenciales. Para el QR de la red local puedes añadir `-CheckoutPublicUrl http://<IP-privada-del-PC>:4300` y mantener el puente móvil iniciado. La clave se pasa al proceso Java mediante su entorno, nunca por argumentos de línea de comandos. Solo se podrá descifrar con el mismo usuario de Windows en este equipo.
-
-### Escanear desde el móvil en la red local
-
-El QR necesita una URL accesible desde el teléfono: `localhost` en el móvil apunta al propio teléfono. Con ambos dispositivos en la misma red, compila Angular y sirve esa compilación mediante el puente incluido, indicando la IPv4 privada del PC:
-
-```powershell
-npm --prefix frontend run build
-node scripts/checkout-preview.cjs --host <IP-privada-del-PC>
-```
-
-Arranca el backend en `127.0.0.1:8080` con `CHECKOUT_PUBLIC_URL=http://<IP-privada-del-PC>:4300`, o abre directamente la web en esa dirección y deja `CHECKOUT_PUBLIC_URL` vacío. El puente sirve únicamente la compilación web y su API, en la interfaz indicada; no expone la carpeta de datos, no modifica el firewall y se detiene con Ctrl+C. No uses la interfaz de una VPN. Una red con aislamiento entre dispositivos puede impedir el acceso. Para publicar la aplicación, usa su origen HTTPS como `CHECKOUT_PUBLIC_URL`.
-
-## Ejecutar con Docker
-
-```sh
-docker compose up --build
-```
-
-Abre http://127.0.0.1:8080. La imagen compila Angular, lo integra como recursos estáticos de Spring Boot y ejecuta la API y la web en un mismo origen. El volumen conserva los registros H2. El contenedor usa un usuario sin privilegios. Esta opción requiere Docker; su construcción no se ha validado en este equipo.
-
-Variables opcionales: `PORT`, `DATABASE_URL`, `DATABASE_USERNAME`, `DATABASE_PASSWORD`. La configuración por defecto usa H2. Para PostgreSQL hay que añadir el driver correspondiente y una configuración de migraciones antes de cambiar la URL.
-
-## Estructura
+## Estructura del repositorio
 
 ```text
-frontend/        Angular + Three.js + modelo y licencias
-backend/         Spring Boot + validación + JPA/H2 + pruebas
-.github/         CI para ambos proyectos
-Dockerfile       Compilación y empaquetado de la aplicación completa
-compose.yaml     Ejecución local con datos persistentes
+concesionario-bmw/
+├── frontend/
+│   ├── src/app/            # Interfaz, catálogo, visor 3D y pedido móvil
+│   ├── public/models/      # Modelos GLB, previews y atribuciones
+│   ├── public/textures/    # Texturas y créditos
+│   └── scripts/            # Pruebas de QR y visor
+├── backend/
+│   ├── src/main/           # API, catálogo, persistencia y correo
+│   ├── src/test/           # Pruebas del backend
+│   └── data/               # Datos locales; ignorados por Git
+├── scripts/                # Brevo, vista previa móvil y preparación de assets
+├── docs/                   # Descripción para portfolio e imágenes del README
+├── .github/workflows/      # Integración continua
+├── .env.example            # Plantilla de configuración local de correo
+├── Dockerfile              # Compilación de frontend y backend en una imagen
+└── compose.yaml            # Servicio local y volumen persistente
 ```
 
-## Modelo 3D y alcance
+## Estado y siguientes pasos
 
-“BMW M4 Competition M Package” por **𝙎𝙍𝙏 𝙋𝙚𝙧𝙛𝙤𝙢𝙖𝙣𝙘𝙚™**, publicado bajo [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). [Fuente original](https://sketchfab.com/3d-models/bmw-m4-competition-m-package-5c0a2dafb1ad408d9fc9eeef9aee531b), [redistribución GLB](https://github.com/coopercodes/bmwGLB) y [atribución y cambios](frontend/public/models/ATTRIBUTION.md). El GLB original conserva los créditos embebidos y pesa unos 23 MB; se descarga una vez por sesión del visor. Las tipografías DM Sans y Manrope se sirven localmente; sus licencias están en los paquetes de Fontsource.
+La V1 implementa la experiencia visual, la configuración y el pedido de demostración. **Railway es el destino previsto, pero todavía no se ha desplegado.**
 
-Mapas de normal y rugosidad de [Leather White](https://polyhaven.com/a/leather_white), de Rob Tuytel / Poly Haven, bajo CC0. Se sirven localmente a 1024×1024 (1,35 MB entre ambos); [créditos](frontend/public/textures/ATTRIBUTION.md). No se ha sustituido el M4 por otro modelo: el habitáculo conserva geometría y atlas originales de resolución limitada. Estos ajustes de materiales no equivalen a un interior fotorrealista. El proyecto mantiene la restricción de utilizar recursos gratuitos.
+Antes de publicar la aplicación quedan por validar la imagen Docker en el entorno de destino, el almacenamiento persistente, las copias de seguridad y la configuración pública de HTTPS, QR y correo. PostgreSQL requiere añadir su controlador y preparar la configuración y las migraciones; no está integrado actualmente.
 
-"BMW 3-Series E46 1998-2006", de **Merc_TV**, bajo CC BY 4.0: [obra original](https://sketchfab.com/3d-models/bmw-3-series-e46-1998-2006-2e32a3e273ab482b83970603539de06a), [redistribución GLB](https://github.com/AzizSyed27/MyE46/blob/main/public/models/e46.glb). Se utiliza el modelo completo de cuatro puertas, con su propio exterior y habitáculo, identificado como 330i E46. Un único sistema de coordenadas conserva el encaje de puertas, techo, cristales, asientos y salpicadero. El adaptador selecciona una sola variante de carrocería y un juego de llantas a la vez. Los materiales y los gráficos ilustrativos de los instrumentos se ajustan en ejecución; la geometría original se conserva. El precio base de 35.000 € es una cifra ficticia de demostración, no una tasación ni una oferta.
+El correo implementado utiliza **SMTP**. Un despliegue cuyo proveedor bloquee SMTP necesitará adaptar el envío a una API HTTPS; esa integración todavía no forma parte de esta V1.
 
-La animación separa grupos de geometría/materiales y no representa un desmontaje mecánico exacto. El modelo del autor puede incluir accesorios distintos de la ficha ilustrativa. La experiencia es un prototipo funcional, no un concesionario operativo ni una réplica del configurador oficial. Para una versión comercial faltan catálogo/precios reales, modelos autorizados de cada vehículo, piezas independientes, autenticación administrativa, límites de uso de la API y un servicio de atención comercial.
+Para convertir el prototipo en un servicio comercial también hacen falta un catálogo y unos precios reales, permisos de uso comercial de todos los recursos, administración y controles de acceso, límites de uso de la API y una política de tratamiento y conservación de datos.
 
-Proyecto independiente, sin afiliación con BMW AG. Marcas y nombres pertenecen a sus titulares.
+## Créditos y licencias
 
-El E46 se carga desde un único GLB con créditos y licencia incorporados. Sus texturas originales tienen limitaciones: no equivale a una reconstrucción fotorrealista.
+Los modelos 3D son recursos de terceros integrados y adaptados para esta experiencia. Su autoría no se atribuye al desarrollador de la aplicación.
 
-## BMW M2 G87
+| Recurso | Autor | Licencia |
+| --- | --- | --- |
+| M4 Competition M Package | SRT Performance | CC BY 4.0 |
+| 330i E46 Berlina | Merc_TV | CC BY 4.0 |
+| M2 G87 | Black Snow | CC BY 4.0 |
+| M3 E92 stance | Black Snow | CC BY 4.0 |
+| X6 xDrive40i | Ddiaz Design | **CC BY-NC-SA 4.0** |
+| M4 F82 | Black Snow | CC BY 4.0 |
+| Leather White | Rob Tuytel / Poly Haven | CC0 1.0 |
 
-Modelo completo gratuito de **Black Snow**, bajo [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/): [obra original](https://sketchfab.com/3d-models/bmw-m2-g87-free-125412579b244790b27b2a7839527c6e). Exterior e interior proceden del mismo GLB (19 MB), cargado al seleccionar el M2. Conserva las texturas originales del habitáculo, pantallas, cuero y detalles; pintura, acabado de llantas y tapicería se ajustan en ejecución. El despiece agrupa las piezas por ensamblajes del autor.
+Los originales, las fuentes de redistribución y los cambios realizados están documentados en [créditos de modelos](frontend/public/models/ATTRIBUTION.md) y [créditos de texturas](frontend/public/textures/ATTRIBUTION.md). Los renders derivados conservan las condiciones de sus recursos de origen. Las tipografías DM Sans y Manrope incluyen sus licencias en los paquetes de Fontsource.
 
-La ficha ilustra el G87 de 2023: 460 CV, propulsión trasera y 4,1 s con cambio automático, según [BMW PressClub](https://www.press.bmwgroup.com/global/article/detail/T0404444EN/the-all-new-bmw-m2). El precio base de 96.900 € es ficticio. El recurso artístico incluye modificaciones mecánicas y no reproduce una especificación OEM exacta.
+**El X6 y sus derivados están limitados a uso no comercial por su licencia.** El despiece es una separación visual ilustrativa, no un procedimiento mecánico exacto. Los modelos no son gemelos digitales certificados ni un catálogo oficial de piezas BMW.
 
-## BMW M3 E92
+El repositorio no incluye actualmente una licencia general para el código de la aplicación. Las licencias de los recursos de terceros se mantienen de forma independiente. Las marcas y nombres de BMW pertenecen a sus titulares.
 
-Modelo completo [M3 E92 stance](https://sketchfab.com/3d-models/bmw-m3-e92-stance-c35a14d811b042d792a6da69381f7f80),
-de Black Snow, CC BY 4.0, con su propio exterior e interior. Se carga al seleccionarlo
-(4,0 MB), con Meshopt servido desde Three.js. El adaptador conserva los atlas del
-habitáculo y separa los grupos del autor para el despiece manual. Los atributos cuantizados
-se convierten a flotantes antes de aplicar las transformaciones comunes.
+## Autor
 
-Es una preparación con suspensión rebajada, asientos y jaula inspirados en el GTS.
-La ficha utiliza como referencia el M3 Coupé manual de 2007 (420 CV / 4,8 s),
-[fuente BMW](https://www.press.bmwgroup.com/global/article/attachment/T0137039EN/208331).
-El precio base de 58.000 € es ficticio de demostración.
-[Atribución y cambios](frontend/public/models/ATTRIBUTION.md).
+**Gabriel Suárez** · [GitHub](https://github.com/gabrielsuarezdevv)
 
-## X6 y M4 F82
-
-Los modelos completos X6 xDrive40i y M4 F82 conservan su propio exterior e interior.
-El X6 se convierte de FBX a GLB mediante Blender; el F82 usa el GLB incluido en su archivo original.
-Se mantienen la carga bajo demanda, la agrupación de geometría y la calidad adaptativa.
-Los cambios de pintura o llantas no activan el despiece automáticamente.
-
-- X6: Ddiaz Design, CC BY-NC-SA 4.0; adaptación y PNG bajo la misma licencia, solo uso no comercial.
-- M4 F82: Black Snow, CC BY 4.0. Asientos y paneles de tapicería de puertas y salpicadero
-  siguen el mismo color de interior; sus materiales conservan normales, carbono y detalles.
-
-Los precios de 85.000 y 65.000 € son ficticios; potencia y aceleración muestran N/D para
-estas variantes artísticas. [Créditos y licencias](frontend/public/models/ATTRIBUTION.md).
-
-El catálogo usa seis PNG transparentes de 1000×540, generados desde el visor con
-assetPreview=1 en desarrollo. Los renders no incluyen fondo, suelo ni rótulos.
-Las pruebas comprueban la transparencia de cada PNG, las proporciones y geometría
-de los modelos, y el cambio de color de todos los paneles de tapicería del F82.
+Proyecto de desarrollo full stack centrado en interacción 3D, experiencia de usuario y conexión entre frontend y backend. La presentación lista para el portfolio está en [docs/PORTFOLIO.md](docs/PORTFOLIO.md).
